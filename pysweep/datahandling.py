@@ -5,7 +5,7 @@ class datafile():
     def __init__(self, columns):
         io = qc.DiskIO('.')
         loc_provider = qc.data.location.FormatLocation(
-            fmt='C:/data/{date}/{date}_{counter}')
+            fmt='D:/data/{date}/{date}_{counter}')
         self.filename = loc_provider(io)
         with io.open(self.filename+'.dat', 'w') as f:
             pass
