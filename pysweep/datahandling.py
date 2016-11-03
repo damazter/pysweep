@@ -37,8 +37,12 @@ class datafile():
         # write metafile lines
         if col['type'] is 'coordinate':
             self.metafile.write(str(col['size']) + '\r\n')
-            self.metafile.write(str(col['start'])+'\r\n')
-            self.metafile.write(str(col['end']) + '\r\n')
+            if not nr == 2: # I hate people
+                self.metafile.write(str(col['end']) + '\r\n')
+                self.metafile.write(str(col['start']) + '\r\n')
+            else:
+                self.metafile.write(str(col['start'])+'\r\n')
+                self.metafile.write(str(col['end']) + '\r\n')
             self.metafile.write(str(col['name']) + '\r\n')
         else:
             self.metafile.write(str(nr+1)+'\r\n')
