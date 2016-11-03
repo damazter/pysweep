@@ -11,7 +11,24 @@ def sweep_object(parameter, points):
             'label': parameter.label,
             'point_function': lambda parameter:points}
 
-def sweep(measurement_init, measure, measurement_end, sweep1, sweep2, sweep3):
+def none():
+    def fun(v, parameters):
+        return {}
+    return {'set_function': fun,
+            'point_function': lambda p:[1],
+            'label': 'None',
+            'unit': 'e'}
+
+def sweep(measurement_init, measurement_end, measure,
+          sweep1=none(),
+          sweep2=none(),
+          sweep3=none()):
+    if not callable(measure):
+        slist = [*measure, sweep1, sweep2, sweep3]
+        for s in slist[4:]:
+            if not s['label'] is 'None':
+                raise Exception('Two many sweepers')
+        measure, sweep1, sweep2, sweep3 = slist[0:4]
     class timer():
         def __init__(self, npoints):
             # save the starting time upon instantiating this class
