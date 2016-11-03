@@ -56,6 +56,7 @@ def sweep(measurement_init, measurement_end, measure,
             print(time.asctime(time.localtime(eta)))
 
     dict_waterfall = measurement_init()
+    dict_waterfall.update({'STATUS': 'INIT'})
 
     #TODO create datafile here
 
@@ -75,6 +76,7 @@ def sweep(measurement_init, measurement_end, measure,
             cols.append({'name': col, 'type': 'value'})
     dat = pysweep.datahandling.datafile(cols)
     # do measurement
+    dict_waterfall.update({'STATUS': 'RUN'})
     for s3 in sweep3['point_function'](dict_waterfall):
         r = sweep3['set_function'](s3, dict_waterfall)
         dict_waterfall.update(r)
@@ -88,6 +90,7 @@ def sweep(measurement_init, measurement_end, measure,
                 dat.write_line([s1, s2, s3] + measure(dict_waterfall))
                 t.update(1)
             dat.write_block()
+    dict_waterfall.update({'STATUS': 'STOP'})
     measurement_end()
     # TODO save station snapshot
     dat.close()
