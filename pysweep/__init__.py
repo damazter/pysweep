@@ -5,7 +5,7 @@ import time
 def sweep_object(parameter, points):
     def fun(x, p):
         parameter.set(x)
-        return {}
+        return []
     return {'set_function': fun,
             'unit': parameter.units,
             'label': parameter.label,
@@ -13,7 +13,7 @@ def sweep_object(parameter, points):
 
 def none():
     def fun(v, parameters):
-        return {}
+        return []
     return {'set_function': fun,
             'point_function': lambda p:[1],
             'label': 'None',
@@ -29,6 +29,12 @@ def sweep(measurement_init, measurement_end, measure,
             if not s['label'] is 'None':
                 raise Exception('Two many sweepers')
         measure, sweep1, sweep2, sweep3 = slist[0:4]
+    if sweep1['set_function'].__doc__ is None:
+        sweep1['set_function'].__doc__ = ''
+    if sweep2['set_function'].__doc__ is None:
+        sweep2['set_function'].__doc__ = ''
+    if sweep3['set_function'].__doc__ is None:
+        sweep3['set_function'].__doc__ = ''
     class timer():
         def __init__(self, npoints):
             # save the starting time upon instantiating this class
@@ -53,7 +59,7 @@ def sweep(measurement_init, measurement_end, measure,
             # function for printing from the timer,
             # here code could be added to send this information to
             # anything that is interested
-            print(time.asctime(time.localtime(eta)))
+            print(time.asctime(time.localtime(eta)), end='\r')
 
     dict_waterfall = measurement_init()
     dict_waterfall.update({'STATUS': 'INIT'})
@@ -71,23 +77,30 @@ def sweep(measurement_init, measurement_end, measure,
                 'start': points[0],
                 'type': 'coordinate'}
     cols = [so2c(sweep1), so2c(sweep2), so2c(sweep3)]
+
     for col in measure.__doc__.replace("  ","").split("\n"):
         if col is not "":
             cols.append({'name': col, 'type': 'value'})
+    for col in sweep1['set_function'].__doc__.replace("  ","").split("\n"):
+        if col is not "":
+            cols.append({'name': col, 'type': 'value'})
+    for col in sweep2['set_function'].__doc__.replace("  ","").split("\n"):
+        if col is not "":
+            cols.append({'name': col, 'type': 'value'})
+    for col in sweep3['set_function'].__doc__.replace("  ","").split("\n"):
+        if col is not "":
+            cols.append({'name': col, 'type': 'value'})
+
     dat = pysweep.datahandling.datafile(cols)
     # do measurement
     dict_waterfall.update({'STATUS': 'RUN'})
     for s3 in sweep3['point_function'](dict_waterfall):
-        r = sweep3['set_function'](s3, dict_waterfall)
-        dict_waterfall.update(r)
+        s3_measure = sweep3['set_function'](s3, dict_waterfall)
         for s2 in sweep2['point_function'](dict_waterfall):
-            r = sweep2['set_function'](s2, dict_waterfall)
-            dict_waterfall.update(r)
+            s2_measure = sweep2['set_function'](s2, dict_waterfall)
             for s1 in sweep1['point_function'](dict_waterfall):
-                r = sweep1['set_function'](s1, dict_waterfall)
-                dict_waterfall.update(r)
-
-                dat.write_line([s1, s2, s3] + measure(dict_waterfall))
+                s1_measure = sweep1['set_function'](s1, dict_waterfall)
+                dat.write_line([s1, s2, s3] + measure(dict_waterfall)+ s1_measure + s2_measure + s3_measure)
                 t.update(1)
             dat.write_block()
     dict_waterfall.update({'STATUS': 'STOP'})
