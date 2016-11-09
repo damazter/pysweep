@@ -1,5 +1,6 @@
 import pysweep.datahandling
 import time
+from IPython.display import clear_output
 
 # define sweep_object
 def sweep_object(parameter, points):
@@ -59,7 +60,8 @@ def sweep(measurement_init, measurement_end, measure,
             # function for printing from the timer,
             # here code could be added to send this information to
             # anything that is interested
-            print(time.asctime(time.localtime(eta)), end='\r')
+            clear_output()
+            print(time.asctime(time.localtime(eta)))
 
     dict_waterfall = measurement_init()
     dict_waterfall.update({'STATUS': 'INIT'})
@@ -104,7 +106,7 @@ def sweep(measurement_init, measurement_end, measure,
                 t.update(1)
             dat.write_block()
     dict_waterfall.update({'STATUS': 'STOP'})
-    measurement_end()
+    measurement_end(dict_waterfall)
     # TODO save station snapshot
     dat.close()
     return dat.filename
