@@ -100,6 +100,7 @@ def sweep(measurement_init, measurement_end, measure,
     dat = pysweep.datahandling.datafile(cols)
 
     # Save snapshot of the station
+    dict_waterfall.update({'FILENAME': dat.filename})
     with open(str(dat.filename) + '.json', 'w') as settings_file:
         json.dump(dict_waterfall['STATION'].snapshot(), settings_file, indent=4)
 
