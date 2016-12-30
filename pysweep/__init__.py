@@ -1,7 +1,11 @@
 import pysweep.datahandling
 import time
 import json
+import inspect
 from IPython.display import clear_output
+
+STATION = None  # a way to set the station as a module property
+
 
 # define sweep_object
 def sweep_object(parameter, points):
@@ -64,11 +68,12 @@ def sweep(measurement_init, measurement_end, measure,
             clear_output()
             print(time.asctime(time.localtime(eta)))
 
-    dict_waterfall = measurement_init()
-    dict_waterfall.update({'STATUS': 'INIT'})
-    if 'STATION' not in dict_waterfall:
+    dict_waterfall = {'STATUS': 'INIT', 'STATION': STATION}
+    measurement_init(dict_waterfall)
+    if dict_waterfall['STATION']:
         raise ValueError("The 'measurement_init' function does not yield a "
                          "dictionary with a 'STATION' entry inside")
+
 
     #TODO create datafile here
 
@@ -99,10 +104,46 @@ def sweep(measurement_init, measurement_end, measure,
 
     dat = pysweep.datahandling.datafile(cols)
 
-    # Save snapshot of the station
     dict_waterfall.update({'FILENAME': dat.filename})
+    # Save snapshot of the station
     with open(str(dat.filename) + '.json', 'w') as settings_file:
         json.dump(dict_waterfall['STATION'].snapshot(), settings_file, indent=4)
+
+    # Write function definitions to file
+    with open(str(dat.filename) + '.py', 'w') as code_file:
+        code_file.write(inspect.getsource(measurement_init))
+        code_file.write(inspect.getsource(measurement_end))
+        code_file.write(inspect.getsource(measure))
+        if not sweep1['label'] is 'None':
+            code_file.write("sweep1: {")
+            code_file.write("\nset_function:\n"+inspect.getsource(sweep1['set_function']))
+            code_file.write("\npoint_function:\n"+inspect.getsource(sweep1['point_function']))
+            code_file.write("\nunit: "+sweep1['unit'])
+            code_file.write("\nlabel: "+sweep1['label'])
+            code_file.write("}")
+        if not sweep2['label'] is 'None':
+            code_file.write("sweep2: {")
+            code_file.write("\nset_function:\n"+inspect.getsource(sweep2['set_function']))
+            code_file.write("\npoint_function:\n"+inspect.getsource(sweep2['point_function']))
+            code_file.write("\nunit: "+sweep2['unit'])
+            code_file.write("\nlabel: "+sweep2['label'])
+            code_file.write("}")
+        if not sweep3['label'] is 'None':
+            code_file.write("sweep3: {")
+            code_file.write("\nset_function:\n"+inspect.getsource(sweep3['set_function']))
+            code_file.write("\npoint_function:\n"+inspect.getsource(sweep3['point_function']))
+            code_file.write("\nunit: "+sweep3['unit'])
+            code_file.write("\nlabel: "+sweep3['label'])
+            code_file.write("}")
+        code_file.write("\n\n")
+        frame = inspect.stack(context=21)[1]
+        try:
+            for line in frame.code_context:
+                code_file.write(str(line))
+        finally:
+            del frame
+
+
 
     # do measurement
     dict_waterfall.update({'STATUS': 'RUN'})
