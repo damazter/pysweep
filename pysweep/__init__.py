@@ -70,7 +70,7 @@ def sweep(measurement_init, measurement_end, measure,
 
     dict_waterfall = {'STATUS': 'INIT', 'STATION': STATION}
     measurement_init(dict_waterfall)
-    if dict_waterfall['STATION']:
+    if dict_waterfall['STATION'] is None:
         raise ValueError("The 'measurement_init' function does not yield a "
                          "dictionary with a 'STATION' entry inside")
 
