@@ -1,5 +1,6 @@
 import pysweep.datahandling
 import time
+import json
 from IPython.display import clear_output
 
 # define sweep_object
@@ -65,6 +66,9 @@ def sweep(measurement_init, measurement_end, measure,
 
     dict_waterfall = measurement_init()
     dict_waterfall.update({'STATUS': 'INIT'})
+    if 'STATION' not in dict_waterfall:
+        raise ValueError("The 'measurement_init' function does not yield a "
+                         "dictionary with a 'STATION' entry inside")
 
     #TODO create datafile here
 
@@ -94,6 +98,11 @@ def sweep(measurement_init, measurement_end, measure,
             cols.append({'name': col, 'type': 'value'})
 
     dat = pysweep.datahandling.datafile(cols)
+
+    # Save snapshot of the station
+    with open(str(dat.filename) + '.json', 'w') as settings_file:
+        json.dump(dict_waterfall['STATION'].snapshot(), settings_file, indent=4)
+
     # do measurement
     dict_waterfall.update({'STATUS': 'RUN'})
     for s3 in sweep3['point_function'](dict_waterfall):
