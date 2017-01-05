@@ -135,13 +135,13 @@ def sweep(measurement_init, measurement_end, measure,
             code_file.write("\nunit: "+sweep3['unit'])
             code_file.write("\nlabel: "+sweep3['label'])
             code_file.write("}")
-        code_file.write("\n\n")
-        frame = inspect.stack(context=21)[1]
-        try:
-            for line in frame.code_context:
-                code_file.write(str(line))
-        finally:
-            del frame
+        #code_file.write("\n\n")
+        #frame = inspect.stack(context=21)[1]
+        #try:
+        #    for line in frame.code_context:
+        #        code_file.write(str(line))
+        #finally:
+        #    del frame
 
 
 
