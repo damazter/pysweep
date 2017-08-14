@@ -15,7 +15,8 @@ def sweep_object(parameter, points):
     return {'set_function': fun,
             'unit': parameter.units,
             'label': parameter.label,
-            'point_function': lambda parameter:points}
+            'point_function': lambda parameter:points,
+            'parameter': parameter}
 
 def none():
     def fun(v, parameters):
