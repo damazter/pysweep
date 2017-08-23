@@ -28,7 +28,8 @@ def none():
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(),
           sweep2=none(),
-          sweep3=none()):
+          sweep3=none(),
+          auto_clear_log=True):
     if not callable(measure):
         slist = [*measure, sweep1, sweep2, sweep3]
         for s in slist[4:]:
@@ -65,7 +66,8 @@ def sweep(measurement_init, measurement_end, measure,
             # function for printing from the timer,
             # here code could be added to send this information to
             # anything that is interested
-            clear_output()
+            if auto_clear_log:
+                clear_output()
             print(time.asctime(time.localtime(eta)))
 
     dict_waterfall = {'STATUS': 'INIT', 'STATION': STATION}
