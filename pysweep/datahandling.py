@@ -7,7 +7,7 @@ import itertools
 fmt = 'D:/data/{date}/{date}_{counter}'
 
 class datafile():
-    def __init__(self, columns, dat_format=True, hdf5_format=False):
+    def __init__(self, columns, dat_format=True, hdf5_format=False, qc_measurement=None):
         self.dat_format = dat_format
         self.hdf5_format = hdf5_format
         io = qc.DiskIO('.')
@@ -21,6 +21,27 @@ class datafile():
         self.columns = columns
         self.write_header()
         self.metafile.close()
+
+        # qc_database part
+        self.qc_datasaver = None  # to be set later by the sweeping function
+        self.all_colnames = []
+        if qc_measurement is not None:
+            set_colnames = []
+            def extract_lc(name):
+                label, unit = name.split(' (')
+                return label, unit[:-1]
+            for col in columns:
+                if col['type'] == 'coordinate':
+                    label, unit = extract_lc(col['name'])
+                    set_colnames.append(label)
+            for col in columns:
+                label, unit = extract_lc(col['name'])
+                self.all_colnames.append(label)
+                if col['type'] == 'coordinate':
+                    qc_measurement.register_custom_parameter(label, unit=unit)
+                else:
+                    qc_measurement.register_custom_parameter(label, unit=unit,
+                                                             setpoints=set_colnames)
 
         # hdf5 part
         dt_list = []
@@ -74,6 +95,9 @@ class datafile():
             self.file.flush()
         if self.hdf5_format:
             self.data[self.h5_iterator.__next__()] = tuple(values)
+        if self.qc_datasaver is not None:
+            self.qc_datasaver.add_result(*[(label, value) for label, value in zip(self.all_colnames, values)])
+
 
     def write_block(self):
         self.file.write('\r\n')

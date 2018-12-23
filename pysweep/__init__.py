@@ -29,7 +29,7 @@ def none():
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(),
           sweep2=none(),
-          sweep3=none(), data_kwargs=None):
+          sweep3=none(), qc_measurement=None, data_kwargs=None):
     if data_kwargs is None:
         data_kwargs = {}
     if not callable(measure):
@@ -104,8 +104,9 @@ def sweep(measurement_init, measurement_end, measure,
         if col is not "":
             cols.append({'name': col, 'type': 'value'})
 
-    dat = pysweep.datahandling.datafile(cols, **data_kwargs)
-
+    dat = pysweep.datahandling.datafile(cols, qc_measurement=qc_measurement, **data_kwargs)
+    if qc_measurement is None:
+        qc_measurement = DummyMeasurement()
     dict_waterfall.update({'FILENAME': dat.filename})
     # Save snapshot of the station
     with open(str(dat.filename) + '.json', 'w') as settings_file:
@@ -146,20 +147,32 @@ def sweep(measurement_init, measurement_end, measure,
             del frame
 
 
-
-    # do measurement
-    dict_waterfall.update({'STATUS': 'RUN'})
-    for s3 in sweep3['point_function'](dict_waterfall):
-        s3_measure = sweep3['set_function'](s3, dict_waterfall)
-        for s2 in sweep2['point_function'](dict_waterfall):
-            s2_measure = sweep2['set_function'](s2, dict_waterfall)
-            for s1 in sweep1['point_function'](dict_waterfall):
-                s1_measure = sweep1['set_function'](s1, dict_waterfall)
-                dat.write_line([s1, s2, s3] + measure(dict_waterfall)+ s1_measure + s2_measure + s3_measure)
-                t.update(1)
-            dat.write_block()
-    dict_waterfall.update({'STATUS': 'STOP'})
-    measurement_end(dict_waterfall)
-    # TODO save station snapshot
-    dat.close()
+    with qc_measurement.run() as datasaver:
+        dat.qc_datasaver = datasaver
+        # do measurement
+        dict_waterfall.update({'STATUS': 'RUN'})
+        for s3 in sweep3['point_function'](dict_waterfall):
+            s3_measure = sweep3['set_function'](s3, dict_waterfall)
+            for s2 in sweep2['point_function'](dict_waterfall):
+                s2_measure = sweep2['set_function'](s2, dict_waterfall)
+                for s1 in sweep1['point_function'](dict_waterfall):
+                    s1_measure = sweep1['set_function'](s1, dict_waterfall)
+                    dat.write_line([s1, s2, s3] + measure(dict_waterfall)+ s1_measure + s2_measure + s3_measure)
+                    t.update(1)
+                dat.write_block()
+        dict_waterfall.update({'STATUS': 'STOP'})
+        measurement_end(dict_waterfall)
+        # TODO save station snapshot
+        dat.close()
     return dat.filename
+
+class DummyMeasurement():
+    def __enter__(self):
+        return DummyMeasurement()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def run(self):
+        return None
+
