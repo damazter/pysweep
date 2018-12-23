@@ -91,7 +91,6 @@ def sweep(measurement_init, measurement_end, measure,
                 'start': points[0],
                 'type': 'coordinate'}
     cols = [so2c(sweep1), so2c(sweep2), so2c(sweep3)]
-
     for col in measure.__doc__.replace("  ","").split("\n"):
         if col is not "":
             cols.append({'name': col, 'type': 'value'})

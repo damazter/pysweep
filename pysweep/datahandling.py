@@ -4,13 +4,15 @@ import time
 import h5py
 import itertools
 
+fmt = 'D:/data/{date}/{date}_{counter}'
+
 class datafile():
     def __init__(self, columns, dat_format=True, hdf5_format=False):
         self.dat_format = dat_format
         self.hdf5_format = hdf5_format
         io = qc.DiskIO('.')
         loc_provider = qc.data.location.FormatLocation(
-            fmt='D:/data/{date}/{date}_{counter}')
+            fmt=fmt)
         self.filename = loc_provider(io)
         with io.open(self.filename+'.dat', 'w') as f:
             pass
