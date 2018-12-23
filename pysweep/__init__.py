@@ -13,7 +13,7 @@ def sweep_object(parameter, points):
         parameter.set(x)
         return []
     return {'set_function': fun,
-            'unit': parameter.units,
+            'unit': parameter.unit,
             'label': parameter.label,
             'point_function': lambda parameter:points,
             'parameter': parameter}
@@ -29,7 +29,9 @@ def none():
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(),
           sweep2=none(),
-          sweep3=none()):
+          sweep3=none(), data_kwargs=None):
+    if data_kwargs is None:
+        data_kwargs = {}
     if not callable(measure):
         slist = [*measure, sweep1, sweep2, sweep3]
         for s in slist[4:]:
@@ -103,7 +105,7 @@ def sweep(measurement_init, measurement_end, measure,
         if col is not "":
             cols.append({'name': col, 'type': 'value'})
 
-    dat = pysweep.datahandling.datafile(cols)
+    dat = pysweep.datahandling.datafile(cols, **data_kwargs)
 
     dict_waterfall.update({'FILENAME': dat.filename})
     # Save snapshot of the station
