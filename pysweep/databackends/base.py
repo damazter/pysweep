@@ -37,6 +37,10 @@ class DataSaver:
     def write_line(self):
         raise NotImplementedError()
 
+    # This function will be called after every innermost loop
+    def write_block(self):
+        raise NotImplementedError()
+
 class CombinedDataBackend(DataBackend, DataSaver):
     def __init__(self, databackends):
         self.databackends = databackends
@@ -62,6 +66,10 @@ class CombinedDataBackend(DataBackend, DataSaver):
     def write_line(self):
         for db in self.databackends:
             db.write_line()
+
+    def write_block(self):
+        for db in self.databackends:
+            db.write_block()
 
 
 

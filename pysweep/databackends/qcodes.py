@@ -34,3 +34,6 @@ class DataBackend(base.DataBackend, base.DataSaver):
     def write_line(self):
         pass
 
+    def write_block(self):
+        pass
+
