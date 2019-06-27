@@ -36,3 +36,34 @@ class DataSaver:
     # and can be written away
     def write_line(self):
         raise NotImplementedError()
+
+class CombinedDataBackend(DataBackend, DataSaver):
+    def __init__(self, databackends):
+        self.databackends = databackends
+        self.datasavers = None
+
+    def setup(self, paramstructure):
+        for db in self.databackends:
+            db.setup(paramstructure)
+
+    def __enter__(self):
+        self.datasavers = []
+        for db in self.databackends:
+            self.datasavers.append(db.__enter__())
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for db in self.databackends:
+            db.__exit__( exc_type, exc_val, exc_tb)
+
+    def add_to_line(self, line):
+        for db in self.databackends:
+            db.add_to_line(line)
+
+    def write_line(self):
+        for db in self.databackends:
+            db.write_line()
+
+
+
+
+
