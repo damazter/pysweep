@@ -6,6 +6,12 @@ class DataParameter:
         self.paramtype = paramtype  # the type of the value
         self.independent = independent  # Is this a column a dependent or independent variable type
 
+class DataParameterFixedSweep(DataParameter):
+    def __init__(self, name, unit, paramtype, start, stop, npoints):
+        super().__init__(name, unit, paramtype, True)
+        self.start = start
+        self.stop = stop
+        self.npoints = npoints
 
 # A databackend is responsible for storing the information that that is acquired by pysweep
 # Since different situations could use different backends,
