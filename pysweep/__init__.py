@@ -1,7 +1,4 @@
-import pysweep.datahandling
 import time
-import json
-import inspect
 from IPython.display import clear_output
 from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
 
