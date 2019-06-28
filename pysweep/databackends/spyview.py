@@ -144,8 +144,5 @@ class DataBackend(base.DataBackend, base.DataSaver):
             self.metafile.write(col['name'] + '\r\n')
 
 
-# dragons be below
-# for now, this file contains stuff that i wantto get rid of, in the main pysweep functionality
-
 
 
