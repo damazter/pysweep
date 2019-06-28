@@ -17,18 +17,18 @@ def sweep_object(parameter, points):
             'point_function': lambda parameter:points,
             'parameter': parameter}
 
-def none():
+def none(id):
     def fun(v, parameters):
         return []
     return {'set_function': fun,
             'point_function': lambda p:[1],
-            'label': 'None',
+            'label': 'None'+str(id),
             'unit': 'e'}
 
 def sweep(measurement_init, measurement_end, measure,
-          sweep1=none(),
-          sweep2=none(),
-          sweep3=none()):
+          sweep1=none(1),
+          sweep2=none(2),
+          sweep3=none(3)):
     if not callable(measure):
         slist = [*measure, sweep1, sweep2, sweep3]
         for s in slist[4:]:
@@ -124,7 +124,8 @@ def sweep(measurement_init, measurement_end, measure,
                     s1_measure = sweep1['set_function'](s1, dict_waterfall)
 
                     data = [s3] + s3_measure + [s2] + s2_measure + [s1] + s1_measure + measure(dict_waterfall)
-                    datasaver.write_line(zip(colnames, data))
+                    datasaver.add_to_line(list(zip(colnames, data)))
+                    datasaver.write_line()
                     t.update(1)
                 datasaver.write_block()
         dict_waterfall.update({'STATUS': 'STOP'})

@@ -2,13 +2,13 @@ import qcodes as qc
 import time
 import inspect
 from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
+import pysweep
 import json
 
 
 import pysweep.databackends.base as base
 
 fmt = 'D:/Data/{date}/{date}_{counter}'
-station = None
 
 
 class DataBackend(base.DataBackend, base.DataSaver):
@@ -27,11 +27,14 @@ class DataBackend(base.DataBackend, base.DataSaver):
     def setup(self, paramstructure):
         self.columns = []
         self.column_lookup = {}
+
         index = 0
         for param in paramstructure:
+            if param.name in self.column_lookup:
+                raise Exception('Multiple columns with name: ', param.name)
             self.column_lookup[param.name] = index
             index += 1
-            if param.type != 'numeric':
+            if param.paramtype != 'numeric':
                 raise Exception('spyview databackend only supports numeric parameters')
             name = param.name+' ('+param.unit+')'
             if isinstance(param, DataParameterFixedSweep):
@@ -43,15 +46,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
             else:
                 self.columns.append({'name': name,
                                      'type': 'value'})
-
-        self.metafile = open(self.filename + '.meta.txt', 'w')
-        self.write_header()
-        self.metafile.close()
-        # Save snapshot of the station
-        with open(str(self.filename) + '.json', 'w') as settings_file:
-            json.dump(station.snapshot(), settings_file, indent=4)
-        with open(str(self.filename) + '.py', 'w') as code_file:
-            self.write_python(code_file)
+        self.line = [None]*len(self.columns)
 
     def write_python(self, code_file):
         # Write function definitions to file
@@ -90,6 +85,14 @@ class DataBackend(base.DataBackend, base.DataSaver):
     def __enter__(self):
         self.runner = self.io.open(self.filename + '.dat', 'w')
         self.file = self.runner.__enter__()
+        self.metafile = open(self.filename + '.meta.txt', 'w')
+        self.write_header()
+        self.metafile.close()
+        # Save snapshot of the station
+        with open(str(self.filename) + '.json', 'w') as settings_file:
+            json.dump(pysweep.STATION.snapshot(), settings_file, indent=4)
+        with open(str(self.filename) + '.py', 'w') as code_file:
+            self.write_python(code_file)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -98,7 +101,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
     def add_to_line(self, columns):
         # update the self.line variable with the set of values that we are currently getting
         for column in columns:
-            self.line[column[0]] = column[1]
+            self.line[self.column_lookup[column[0]]] = column[1]
 
     def write_line(self):
         self.file.write('\t'.join([str(v) for v in self.line]) + '\r\n')
