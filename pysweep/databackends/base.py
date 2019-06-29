@@ -1,6 +1,6 @@
 # The DataParameter class stores all information that belongs to a single data column
 class DataParameter:
-    def __init__(self, name, unit, paramtype, independent):
+    def __init__(self, name, unit, paramtype='numeric', independent=False):
         self.name = name  # name and label of this parameter
         self.unit = unit  # The unit belonging to values of this type
         self.paramtype = paramtype  # the type of the value
