@@ -105,7 +105,7 @@ def sweep(measurement_init, measurement_end, measure,
         if col is not "":
             name, unit = extract_lc(col)
             cols.append(DataParameter(name, unit, 'numeric', False))
-    for param in measure.paramstruct():
+    for param in measure.get_paramstruct():
         cols.append(param)
 
     databackend.setup(cols)

@@ -10,8 +10,8 @@ class MeasurementFunction:
 
     # The paramstruct method should return a list of DataParameters for each element this
     # Measurement function will return in its __call__ method
-    def paramstruct(self) -> list:
-        return self.paramstruct()
+    def get_paramstruct(self) -> list:
+        return self.paramstruct
 
 def MakeMeasurementFunction(paramstruct):
     new_param_struct = []
