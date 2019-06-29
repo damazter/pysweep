@@ -105,10 +105,8 @@ def sweep(measurement_init, measurement_end, measure,
         if col is not "":
             name, unit = extract_lc(col)
             cols.append(DataParameter(name, unit, 'numeric', False))
-    for col in measure.__doc__.replace("  ","").split("\n"):
-        if col is not "":
-            name, unit = extract_lc(col)
-            cols.append(DataParameter(name, unit, 'numeric', False))
+    for param in measure.paramstruct():
+        cols.append(param)
 
     databackend.setup(cols)
     colnames = [col.name for col in cols]
