@@ -74,6 +74,7 @@ class CombinedDataBackend(DataBackend, DataSaver):
         self.datasavers = []
         for db in self.databackends:
             self.datasavers.append(db.__enter__())
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for db in self.databackends:
