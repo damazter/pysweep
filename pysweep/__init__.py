@@ -5,7 +5,6 @@ from pysweep.core.sweepobject import SweepObject
 from pysweep.core.measurementfunctions import MeasurementFunction, MakeMeasurementFunction
 
 STATION = None  # a way to set the station as a module property
-databackend = None
 
 
 # define sweep_object
@@ -38,7 +37,7 @@ def none(id):
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(1),
           sweep2=none(2),
-          sweep3=none(3)):
+          sweep3=none(3), databackend=None):
     if not callable(measure):
         slist = [*measure, sweep1, sweep2, sweep3]
         for s in slist[4:]:
