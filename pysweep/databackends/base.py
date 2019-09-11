@@ -6,6 +6,10 @@ class DataParameter:
         self.paramtype = paramtype  # the type of the value
         self.independent = independent  # Is this a column a dependent or independent variable type
 
+    def __repr__(self):
+        r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent)]
+        return " ".join(r)
+
 class DataParameterFixedSweep(DataParameter):
     def __init__(self, name, unit, paramtype, start, stop, npoints):
         super().__init__(name, unit, paramtype, True)

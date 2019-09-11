@@ -5,7 +5,8 @@ class DebugDataBackend(base.DataBackend, base.DataSaver):
         pass
 
     def setup(self, paramstructure):
-        print(paramstructure)
+        for param in paramstructure:
+            print(param)
 
     def __enter__(self):
         return self
