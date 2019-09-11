@@ -9,7 +9,7 @@ databackend = None
 
 
 # define sweep_object
-def sweep_object(parameter, points):
+def sweep_object(parameter, points, dataparameter=None):
     @MakeMeasurementFunction([])
     def fun(x, p):
         parameter.set(x)
@@ -22,7 +22,7 @@ def sweep_object(parameter, points):
     if isinstance(points, MeasurementFunction):
         point_fun = points
 
-    return SweepObject(fun, parameter.unit, parameter.label, point_fun)
+    return SweepObject(fun, parameter.unit, parameter.label, point_fun, dataparameter=dataparameter)
 
 def none(id):
     @MakeMeasurementFunction([])
@@ -80,30 +80,34 @@ def sweep(measurement_init, measurement_end, measure,
 
 
     #TODO create datafile here
-
-    t = timer(len(sweep1.point_function(dict_waterfall)) *
-              len(sweep2.point_function(dict_waterfall)) *
-              len(sweep3.point_function(dict_waterfall)))
-    def so2c(so):
-        points, _ = so.point_function(dict_waterfall)
-        return DataParameterFixedSweep(so.label, so.unit, 'numeric', points[0], points[-1], len(points))
+    n = 1
+    if isinstance(sweep1.get_dataparameter(), DataParameterFixedSweep):
+        n = n*sweep1.get_dataparameter().npoints
+    if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
+        n = n*sweep2.get_dataparameter().npoints
+    if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
+        n = n*sweep2.get_dataparameter().npoints
+    t = timer(n)
+    #def so2c(so):
+    #    points, _ = so.point_function(dict_waterfall)
+    #    return DataParameterFixedSweep(so.label, so.unit, 'numeric', points[0], points[-1], len(points))
     cols = []
 
     for param in sweep3.point_function.get_paramstruct():
         cols.append(param)
-    cols.append(so2c(sweep3))
+    cols.append(sweep3.get_dataparameter())
     for param in sweep3.set_function.get_paramstruct():
         cols.append(param)
 
     for param in sweep2.point_function.get_paramstruct():
         cols.append(param)
-    cols.append(so2c(sweep2))
+    cols.append(sweep2.get_dataparameter())
     for param in sweep2.set_function.get_paramstruct():
         cols.append(param)
 
     for param in sweep1.point_function.get_paramstruct():
         cols.append(param)
-    cols.append(so2c(sweep1))
+    cols.append(sweep1.get_dataparameter())
     for param in sweep1.set_function.get_paramstruct():
         cols.append(param)
 
