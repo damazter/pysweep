@@ -17,6 +17,10 @@ class DataParameterFixedSweep(DataParameter):
         self.stop = stop
         self.npoints = npoints
 
+    def __repr__(self):
+        r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent), str(self.npoints)]
+        return " ".join(r)
+
 # A databackend is responsible for storing the information that that is acquired by pysweep
 # Since different situations could use different backends,
 # this file defines the interface that pysweep will use to control the data backend
