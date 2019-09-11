@@ -85,7 +85,7 @@ def sweep(measurement_init, measurement_end, measure,
               len(sweep2.point_function(dict_waterfall)) *
               len(sweep3.point_function(dict_waterfall)))
     def so2c(so):
-        points=so.point_function(dict_waterfall)
+        points, _ = so.point_function(dict_waterfall)
         return DataParameterFixedSweep(so.label, so.unit, 'numeric', points[0], points[-1], len(points))
     cols = []
 
