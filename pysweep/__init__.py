@@ -14,13 +14,26 @@ def sweep_object(parameter, points):
     def fun(x, p):
         parameter.set(x)
         return []
-    return SweepObject(fun, parameter.unit, parameter.label, lambda d:points)
+
+    @MakeMeasurementFunction([])
+    def point_fun(dict_waterfall):
+        return points, []
+
+    if isinstance(points, MeasurementFunction):
+        point_fun = points
+
+    return SweepObject(fun, parameter.unit, parameter.label, point_fun)
 
 def none(id):
     @MakeMeasurementFunction([])
     def fun(v, parameters):
         return []
-    return SweepObject(fun, 'e', 'None'+str(id), lambda p:[1])
+
+    @MakeMeasurementFunction([])
+    def point_fun(dict_waterfall):
+        return [1], []
+
+    return SweepObject(fun, 'e', 'None'+str(id), point_fun)
 
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(1),
@@ -74,15 +87,22 @@ def sweep(measurement_init, measurement_end, measure,
     def so2c(so):
         points=so.point_function(dict_waterfall)
         return DataParameterFixedSweep(so.label, so.unit, 'numeric', points[0], points[-1], len(points))
+    cols = []
 
-    cols = [so2c(sweep3)]
+    for param in sweep3.point_function.get_paramstruct():
+        cols.append(param)
+    cols.append(so2c(sweep3))
     for param in sweep3.set_function.get_paramstruct():
         cols.append(param)
 
+    for param in sweep2.point_function.get_paramstruct():
+        cols.append(param)
     cols.append(so2c(sweep2))
     for param in sweep2.set_function.get_paramstruct():
         cols.append(param)
 
+    for param in sweep1.point_function.get_paramstruct():
+        cols.append(param)
     cols.append(so2c(sweep1))
     for param in sweep1.set_function.get_paramstruct():
         cols.append(param)
@@ -96,14 +116,17 @@ def sweep(measurement_init, measurement_end, measure,
     with databackend as pysweep_datasaver:
         # do measurement
         dict_waterfall.update({'STATUS': 'RUN'})
-        for s3 in sweep3.point_function(dict_waterfall):
+        points3, s3p_measure = sweep3.point_function(dict_waterfall)
+        for s3 in points3:
             s3_measure = sweep3.set_function(s3, dict_waterfall)
-            for s2 in sweep2.point_function(dict_waterfall):
+            points2, s2p_measure = sweep2.point_function(dict_waterfall)
+            for s2 in points2:
                 s2_measure = sweep2.set_function(s2, dict_waterfall)
-                for s1 in sweep1.point_function(dict_waterfall):
+                points1, s1p_measure = sweep1.point_function(dict_waterfall)
+                for s1 in points1:
                     s1_measure = sweep1.set_function(s1, dict_waterfall)
 
-                    data = [s3] + s3_measure + [s2] + s2_measure + [s1] + s1_measure + measure(dict_waterfall)
+                    data = s3p_measure + [s3] + s3_measure + s2p_measure + [s2] + s2_measure + s1p_measure + [s1] + s1_measure + measure(dict_waterfall)
                     pysweep_datasaver.add_to_line(list(zip(colnames, data)))
                     pysweep_datasaver.write_line()
                     t.update(1)

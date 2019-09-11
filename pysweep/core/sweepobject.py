@@ -9,5 +9,5 @@ class SweepObject:
         if not isinstance(self.set_function, MeasurementFunction):
             raise TypeError('Set function '+repr(self.set_function)+ ' is not of type pysweep.core.measurementfunctions.MeasurementFunction')
 
-    def __call__(self, dict_waterfall) -> list:
-        return self.function(dict_waterfall)
+        if not isinstance(self.point_function, MeasurementFunction):
+            raise TypeError('Set function '+repr(self.set_function)+ ' is not of type pysweep.core.measurementfunctions.MeasurementFunction')
