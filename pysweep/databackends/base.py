@@ -29,7 +29,13 @@ class DataBackend:
         raise NotImplementedError()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # This function will be called after the measurement finishes (or crashes)
+        '''
+        This function will be called after the measurement finishes (or crashes)
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        '''
         raise NotImplementedError()
 
 # This class defines how

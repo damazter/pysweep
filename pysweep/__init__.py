@@ -32,7 +32,7 @@ def sweep(measurement_init, measurement_end, measure,
     if not callable(measure):
         slist = [*measure, sweep1, sweep2, sweep3]
         for s in slist[4:]:
-            if not s['label'] is 'None':
+            if not s['label'].startswith('None'):
                 raise Exception('Two many sweepers')
         measure, sweep1, sweep2, sweep3 = slist[0:4]
     if sweep1['set_function'].__doc__ is None:
@@ -111,7 +111,7 @@ def sweep(measurement_init, measurement_end, measure,
     databackend.setup(cols)
     colnames = [col.name for col in cols]
 
-    with databackend as datasaver:
+    with databackend as pysweep_datasaver:
         # do measurement
         dict_waterfall.update({'STATUS': 'RUN'})
         for s3 in sweep3['point_function'](dict_waterfall):
@@ -122,11 +122,12 @@ def sweep(measurement_init, measurement_end, measure,
                     s1_measure = sweep1['set_function'](s1, dict_waterfall)
 
                     data = [s3] + s3_measure + [s2] + s2_measure + [s1] + s1_measure + measure(dict_waterfall)
-                    datasaver.add_to_line(list(zip(colnames, data)))
-                    datasaver.write_line()
+                    pysweep_datasaver.add_to_line(list(zip(colnames, data)))
+                    pysweep_datasaver.write_line()
                     t.update(1)
-                datasaver.write_block()
+                    pysweep_datasaver.write_block()
         dict_waterfall.update({'STATUS': 'STOP'})
         measurement_end(dict_waterfall)
-    return
+    
+    return pysweep_datasaver
 
