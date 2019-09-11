@@ -1,6 +1,8 @@
 import time
 from IPython.display import clear_output
 from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
+from pysweep.core.sweepobject import SweepObject
+from pysweep.core.measurementfunctions import MeasurementFunction, MakeMeasurementFunction
 
 STATION = None  # a way to set the station as a module property
 databackend = None
@@ -8,22 +10,17 @@ databackend = None
 
 # define sweep_object
 def sweep_object(parameter, points):
+    @MakeMeasurementFunction([])
     def fun(x, p):
         parameter.set(x)
         return []
-    return {'set_function': fun,
-            'unit': parameter.unit,
-            'label': parameter.label,
-            'point_function': lambda parameter:points,
-            'parameter': parameter}
+    return SweepObject(fun, parameter.unit, parameter.label, lambda d:points)
 
 def none(id):
+    @MakeMeasurementFunction([])
     def fun(v, parameters):
         return []
-    return {'set_function': fun,
-            'point_function': lambda p:[1],
-            'label': 'None'+str(id),
-            'unit': 'e'}
+    return SweepObject(fun, 'e', 'None'+str(id), lambda p:[1])
 
 def sweep(measurement_init, measurement_end, measure,
           sweep1=none(1),
@@ -35,12 +32,6 @@ def sweep(measurement_init, measurement_end, measure,
             if not s['label'].startswith('None'):
                 raise Exception('Two many sweepers')
         measure, sweep1, sweep2, sweep3 = slist[0:4]
-    if sweep1['set_function'].__doc__ is None:
-        sweep1['set_function'].__doc__ = ''
-    if sweep2['set_function'].__doc__ is None:
-        sweep2['set_function'].__doc__ = ''
-    if sweep3['set_function'].__doc__ is None:
-        sweep3['set_function'].__doc__ = ''
     class timer():
         def __init__(self, npoints):
             # save the starting time upon instantiating this class
@@ -77,34 +68,25 @@ def sweep(measurement_init, measurement_end, measure,
 
     #TODO create datafile here
 
-    t = timer(len(sweep1['point_function'](dict_waterfall)) *
-              len(sweep2['point_function'](dict_waterfall)) *
-              len(sweep3['point_function'](dict_waterfall)))
+    t = timer(len(sweep1.point_function(dict_waterfall)) *
+              len(sweep2.point_function(dict_waterfall)) *
+              len(sweep3.point_function(dict_waterfall)))
     def so2c(so):
-        points=so['point_function'](dict_waterfall)
-        return DataParameterFixedSweep(so['label'], so['unit'], 'numeric', points[0], points[-1], len(points))
-
-    def extract_lc(name):
-        label, unit = name.split(' (')
-        return label, unit[:-1]
+        points=so.point_function(dict_waterfall)
+        return DataParameterFixedSweep(so.label, so.unit, 'numeric', points[0], points[-1], len(points))
 
     cols = [so2c(sweep3)]
-    for col in sweep3['set_function'].__doc__.replace("  ","").split("\n"):
-        if col is not "":
-            name, unit = extract_lc(col)
-            cols.append(DataParameter(name, unit, 'numeric', False))
+    for param in sweep3.set_function.get_paramstruct():
+        cols.append(param)
 
     cols.append(so2c(sweep2))
-    for col in sweep2['set_function'].__doc__.replace("  ","").split("\n"):
-        if col is not "":
-            name, unit = extract_lc(col)
-            cols.append(DataParameter(name, unit, 'numeric', False))
+    for param in sweep2.set_function.get_paramstruct():
+        cols.append(param)
 
     cols.append(so2c(sweep1))
-    for col in sweep1['set_function'].__doc__.replace("  ","").split("\n"):
-        if col is not "":
-            name, unit = extract_lc(col)
-            cols.append(DataParameter(name, unit, 'numeric', False))
+    for param in sweep1.set_function.get_paramstruct():
+        cols.append(param)
+
     for param in measure.get_paramstruct():
         cols.append(param)
 
@@ -114,12 +96,12 @@ def sweep(measurement_init, measurement_end, measure,
     with databackend as pysweep_datasaver:
         # do measurement
         dict_waterfall.update({'STATUS': 'RUN'})
-        for s3 in sweep3['point_function'](dict_waterfall):
-            s3_measure = sweep3['set_function'](s3, dict_waterfall)
-            for s2 in sweep2['point_function'](dict_waterfall):
-                s2_measure = sweep2['set_function'](s2, dict_waterfall)
-                for s1 in sweep1['point_function'](dict_waterfall):
-                    s1_measure = sweep1['set_function'](s1, dict_waterfall)
+        for s3 in sweep3.point_function(dict_waterfall):
+            s3_measure = sweep3.set_function(s3, dict_waterfall)
+            for s2 in sweep2.point_function(dict_waterfall):
+                s2_measure = sweep2.set_function(s2, dict_waterfall)
+                for s1 in sweep1.point_function(dict_waterfall):
+                    s1_measure = sweep1.set_function(s1, dict_waterfall)
 
                     data = [s3] + s3_measure + [s2] + s2_measure + [s1] + s1_measure + measure(dict_waterfall)
                     pysweep_datasaver.add_to_line(list(zip(colnames, data)))

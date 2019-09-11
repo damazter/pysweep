@@ -5,8 +5,8 @@ class MeasurementFunction:
         self.function = function
         self.paramstruct = paramstruct
 
-    def __call__(self, dict_waterfall) -> list:
-        return self.function(dict_waterfall)
+    def __call__(self, *args, **kwargs) -> list:
+        return self.function(*args, **kwargs)
 
     # The paramstruct method should return a list of DataParameters for each element this
     # Measurement function will return in its __call__ method
