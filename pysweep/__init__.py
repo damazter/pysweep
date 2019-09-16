@@ -85,7 +85,7 @@ def sweep(measurement_init, measurement_end, measure,
     if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
         n = n*sweep2.get_dataparameter().npoints
     if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
-        n = n*sweep2.get_dataparameter().npoints
+        n = n*sweep3.get_dataparameter().npoints
     t = timer(n)
     #def so2c(so):
     #    points, _ = so.point_function(dict_waterfall)
