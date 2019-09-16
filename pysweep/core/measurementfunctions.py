@@ -1,3 +1,5 @@
+from functools import wraps
+
 from pysweep.databackends.base import DataParameter
 
 class MeasurementFunction:
