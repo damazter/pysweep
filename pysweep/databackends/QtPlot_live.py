@@ -36,7 +36,8 @@ class QtPlot_live_plotter(base.DataBackend, base.DataSaver):
     will show correctly only if they are on a regular grid
     '''
 
-    def __init__(self, plotting_interval: float=3, export_png=True):
+    def __init__(self, plotting_interval: float=3, export_png=True,
+            experiment=None):
 
         self.plotting_interval = plotting_interval
 
@@ -48,6 +49,8 @@ class QtPlot_live_plotter(base.DataBackend, base.DataSaver):
 
         self.export_png = export_png
         print(self.directory_prefix)
+
+        self.experiment = experiment
 
     def setup(self, paramstructure):
 
@@ -77,6 +80,23 @@ class QtPlot_live_plotter(base.DataBackend, base.DataSaver):
         self.create_plots()
 
     def __enter__(self):
+        # get QCodes database and experiment name
+        # as well as run id
+        if self.experiment is None:
+            ds = qc.load_last_experiment().last_data_set()
+        else:
+            ds = qc.load_experiment_by_name(self.experiment).last_data_set()
+        db_name = ds.path_to_db.split('\\')[-1].split('.')[0]
+        exp_name = ds.exp_name
+        run_id = str(ds.captured_run_id)
+
+        for i, quantity in enumerate(self.quantities):
+            plot_title = ' '.join([self.filename_prefix, quantity['name']])
+            plot_title_2 = ' '.join([exp_name, run_id, db_name])
+            plot_title = plot_title+' || '+plot_title_2
+
+            quantity['plot'].subplots[0].setTitle(plot_title,size='8pt',color='000000')
+
         # a counter used to select where the new data point
         # should be inserted
         self.point_counter = 0
@@ -103,9 +123,6 @@ class QtPlot_live_plotter(base.DataBackend, base.DataSaver):
                         figsize=(450, 300),
                         fig_x_position=(i%4)*0.25,
                         fig_y_position=int(i/4)*0.33)
-
-            plot_title = ' '.join([self.filename_prefix, quantity['name']])
-            quantity['plot'].subplots[0].setTitle(plot_title)
 
             if len(self.coordinates) == 1:
                 coordinate = self.coordinates[0]
