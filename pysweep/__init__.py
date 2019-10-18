@@ -21,7 +21,7 @@ def sweep_object(parameter, points, dataparameter=None):
     if isinstance(points, MeasurementFunction):
         point_fun = points
 
-    return SweepObject(fun, parameter.unit, parameter.label, point_fun, dataparameter=dataparameter)
+    return SweepObject(fun, parameter.unit, parameter.name, point_fun, dataparameter=dataparameter)
 
 def none(id):
     @MakeMeasurementFunction([])
