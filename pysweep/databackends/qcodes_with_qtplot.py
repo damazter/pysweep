@@ -21,6 +21,27 @@ For higher dimentionality use ordinary qcodes DataBackend.
 class DataBackend(pysweep.databackends.qcodes.DataBackend):
     def __init__(self, experiment_name, sample, station,
                     plotting_interval: float=3, export_png=True):
+        '''
+        This is a PycQED-inspired subclass of qcodes data backend
+        that adds 1D and 2D live plotting functionality.
+
+        The backend uses QtPlot from QCoDeS for live plotting. Since plotting
+        runs in the same thread as the measurement it introduces an overhead
+        that comes from opening of the windows with plots and updating them.
+        With plotting_interval=3 (seconds) overhead in measurement
+        is relatively small (~10%).
+
+        The backend has an option of outputting a PNG image at the end
+        of the measurement. The figures are saved in subdirectories
+        of the folder where database is saved.
+
+        Plots titles contain information allowing to easily identify
+        which database the data was saved in and where in the database
+        the data is saved.
+
+        At this time only 1D and 2D datasets are supported. 2D datasets
+        will show correctly only if they are on a regular grid
+        '''
 
         self.plotting_interval = plotting_interval
         self.export_png = export_png
@@ -61,12 +82,15 @@ class DataBackend(pysweep.databackends.qcodes.DataBackend):
     def __enter__(self):
         super().__enter__()
 
+        # read database name and identifiers allowing
+        # to locate the dataset in the database
         exp_name = self.runner.ds.exp_name
         run_id = self.runner.ds.run_id
         db_name = self.runner.ds.path_to_db.split('\\')[-1].split('.')[0]
         timestamp = self.runner.ds.run_timestamp()
         self.time = timestamp.split(' ')[1].replace(':','-')
 
+        # add titles to plots
         for i, quantity in enumerate(self.quantities):
             title_list = []
             title_list.append(quantity['name'])
@@ -79,6 +103,7 @@ class DataBackend(pysweep.databackends.qcodes.DataBackend):
             quantity['plot'].subplots[0].setTitle(plot_title,
                             size='7pt',color='000000')
 
+        # create a directory for figures
         if self.export_png:
             fmt = self.runner.ds.path_to_db.split('.')[0]
             fmt = fmt+'\\{date}\\{time}'
