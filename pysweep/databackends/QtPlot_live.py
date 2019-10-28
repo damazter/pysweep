@@ -12,6 +12,19 @@ import pysweep.databackends.base as base
 
 fmt = 'D:/Data/{date}/{date}_{counter}'
 
+'''
+At this point the backend has a hacked in solution
+to include the location of the data with Spyview and Qcodes
+data backends. 
+Directory with Spyview data is used to save the default
+plots in png.
+
+Since the Spyview databackend should not be used any more
+(we try to transition to qcodes database) i recommend to use
+pysweep.databackends.qcodes_with_qtplot.DataBackend instead
+of combined databackend qcodes + QtPlot_live.
+'''
+
 class QtPlot_live_plotter(base.DataBackend, base.DataSaver):
     '''
     This is a PycQED-inspired data backend for live plotting of the data.
