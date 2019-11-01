@@ -10,7 +10,7 @@ from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
 from pytopo.qctools.dataset2 import select_experiment
 import pysweep.databackends.base as base
 
-import pysweep.databackends.qcodes
+import pysweep.databackends.qcodes as qcodes_backend
 
 '''
 A subclassed qcodes DataBackend, that makes live plots
@@ -18,7 +18,7 @@ of 1D and 2D data.
 For higher dimentionality use ordinary qcodes DataBackend.
 '''
 
-class DataBackend(pysweep.databackends.qcodes.DataBackend):
+class DataBackend(qcodes_backend.DataBackend):
     def __init__(self, experiment_name, sample, station,
                     plotting_interval: float=3, export_png=True):
         '''
@@ -177,8 +177,8 @@ class DataBackend(pysweep.databackends.qcodes.DataBackend):
         for i, quantity in enumerate(self.quantities):
             quantity['plot'] = QtPlot(window_title=quantity['name'],
                         figsize=(450, 300),
-                        fig_x_position=(i%4)*0.25,
-                        fig_y_position=int(i/4)*0.33)
+                        fig_x_position=int(i/3)*0.25,
+                        fig_y_position=(i%3)*0.315)
 
             if len(self.coordinates) == 1:
                 coordinate = self.coordinates[0]
