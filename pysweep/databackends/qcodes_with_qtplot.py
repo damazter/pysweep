@@ -39,8 +39,10 @@ class DataBackend(qcodes_backend.DataBackend):
         which database the data was saved in and where in the database
         the data is saved.
 
-        At this time only 1D and 2D datasets are supported. 2D datasets
-        will show correctly only if they are on a regular grid
+        At this time only 1D and 2D datasets and only point-by-point
+        measurements are supported. 2D datasets will show correctly
+        only if they are on a regular grid.
+        Increasing generality is on TODO list.
         '''
 
         self.plotting_interval = plotting_interval
