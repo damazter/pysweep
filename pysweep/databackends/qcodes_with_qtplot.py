@@ -2,11 +2,17 @@ import numpy as np
 import time
 import os
 
+try:
+    import ipywidgets as ipw
+    from IPython.display import display
+except:
+    print('Ipywidgets not loaded!')
+
 import qcodes as qc
 from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.dataset.measurements import Measurement
 
-from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
+from pysweep.databackends.base import DataParameter, DataParameterFixedSweep, DataParameterFixedAxis
 from pytopo.qctools.dataset2 import select_experiment
 import pysweep.databackends.base as base
 
@@ -18,9 +24,12 @@ of 1D and 2D data.
 For higher dimentionality use ordinary qcodes DataBackend.
 '''
 
+
 class DataBackend(qcodes_backend.DataBackend):
     def __init__(self, experiment_name, sample, station,
-                    plotting_interval: float=3, export_png=True):
+                    plotting_interval: float=3,
+                    export_png=True,
+                    progress_bar=False):
         '''
         This is a PycQED-inspired subclass of qcodes data backend
         that adds 1D and 2D live plotting functionality.
@@ -47,6 +56,7 @@ class DataBackend(qcodes_backend.DataBackend):
 
         self.plotting_interval = plotting_interval
         self.export_png = export_png
+        self.progress_bar = progress_bar
 
         self.experiment = select_experiment(experiment_name, sample)
         measurement = Measurement(self.experiment, station)
@@ -58,28 +68,40 @@ class DataBackend(qcodes_backend.DataBackend):
         
         # distinguish between independent and dependent parameters
         # (coordinates and quantities, respectively)
-        self.coordinates = []
+        self.soft_sweeped_coordinates = []
+        self.hard_sweeped_coordinates = []
         self.quantities = []
 
         for param in paramstructure:
             if isinstance(param, DataParameterFixedSweep):
                 if ('None' in param.name) and (param.unit is 'e'):
                     continue
-                self.coordinates.append({'name': param.name,
-                                     'unit': param.unit,
-                                     'start': param.start,
-                                     'end': param.stop,
-                                     'size': param.npoints})
+                self.soft_sweeped_coordinates.append({'name': param.name,
+                                                 'unit': param.unit,
+                                                 'start': param.start,
+                                                 'end': param.stop,
+                                                 'size': param.npoints})
+            elif isinstance(param, DataParameterFixedAxis):
+                if ('None' in param.name) and (param.unit is 'e'):
+                    continue
+                self.hard_sweeped_coordinates.append({'name': param.name,
+                                                 'unit': param.unit,
+                                                 'coordinates': param.coordinates})
             else:
                 self.quantities.append({'name': param.name,
                                      'unit': param.unit,
-                                     'type': 'value'})
+                                     'type': param.paramtype})
+
 
         # to account for the parameter of
         # the innermost loop stored in the last column
-        self.coordinates.reverse()
+        self.soft_sweeped_coordinates.reverse()
+        self.hard_sweeped_coordinates.reverse()
 
         self.create_plots()
+
+        if self.progress_bar:
+            self.create_progress_bar()
 
     def __enter__(self):
         super().__enter__()
@@ -96,7 +118,7 @@ class DataBackend(qcodes_backend.DataBackend):
         for i, quantity in enumerate(self.quantities):
             title_list = []
             title_list.append(quantity['name'])
-            title_list.append(exp_name)
+            # title_list.append(exp_name)
             title_list.append(str(run_id))
             title_list.append(db_name)
             title_list.append(timestamp)
@@ -136,6 +158,8 @@ class DataBackend(qcodes_backend.DataBackend):
         # and export figures
         for qi, quantity in enumerate(self.quantities):
             quantity['plot'].update_plot()
+            if self.progress_bar:
+                self.update_progress_bar()
 
             if self.export_png:
                 filename = '/'.join([self.directory_prefix,
@@ -143,31 +167,42 @@ class DataBackend(qcodes_backend.DataBackend):
                 quantity['plot'].save(filename=filename)
 
     def add_to_line(self, line):
-        super().add_to_line(line)
+        super().add_to_line(line)       
 
-        if len(self.coordinates) == 1:
-            for qi, quantity in enumerate(self.quantities):
-                quantity['xvals'][self.point_counter] = line[2][1]
-                quantity['yvals'][self.point_counter] = line[3+qi][1]
-        elif len(self.coordinates) == 2:
-            for qi, quantity in enumerate(self.quantities):
-                x_index = self.point_counter % self.coordinates[0]['size']
-                y_index = int((self.point_counter - x_index)/self.coordinates[0]['size'])
+        for qi, quantity in enumerate(self.quantities):
+            # case for the measured data that is returned point-by-point
+            if quantity['type'] == 'numeric':
+                # 1D measurement
+                if len(self.soft_sweeped_coordinates) == 1:
+                    quantity['xvals'][self.point_counter] = line[2][1]
+                    quantity['yvals'][self.point_counter] = line[3+qi][1]
+                elif len(self.soft_sweeped_coordinates) == 2:
+                    x_index = self.point_counter % self.coordinates[0]['size']
+                    y_index = int((self.point_counter - x_index)/self.coordinates[0]['size'])
 
-                # commented out because I can't get the irregular grid
-                # to work [FKM], TODO
-                # quantity['xvals'][y_index] = line[1][1]
-                # quantity['yvals'][x_index] = line[2][1]
-                quantity['zvals'][y_index,x_index] = line[3+qi][1]
-
-        else:
-            raise NotImplementedError('qcodes_with_qtplot only supports plotting 1D and 2D data')
+                    # commented out because I can't get the irregular grid
+                    # to work [FKM], TODO
+                    # quantity['xvals'][y_index] = line[1][1]
+                    # quantity['yvals'][x_index] = line[2][1]
+                    quantity['zvals'][y_index,x_index] = line[3+qi][1]
+            # case for the measured data that is returned line-by-line
+            elif quantity['type'] == 'array':
+                # 1D measurement
+                if len(self.soft_sweeped_coordinates) == 0:
+                    quantity['yvals'][:] = line[4+qi][1][:]
+                # 2D measurement
+                elif len(self.soft_sweeped_coordinates) == 1:
+                    quantity['zvals'][:,self.point_counter] = line[4+qi][1][:]
+            else:
+                raise NotImplementedError('qcodes_with_qtplot only supports plotting 1D and 2D data')
         
         # update plot only every several (self.plotting_interval)
         # seconds to minimize the overhead
         if time.time()-self.last_update_time > self.plotting_interval:
             for qi, quantity in enumerate(self.quantities):
                 quantity['plot'].update_plot()
+            if self.progress_bar:
+                self.update_progress_bar()
             self.last_update_time = time.time()
 
         self.point_counter += 1
@@ -178,50 +213,115 @@ class DataBackend(qcodes_backend.DataBackend):
         # dataset opened
         for i, quantity in enumerate(self.quantities):
             quantity['plot'] = QtPlot(window_title=quantity['name'],
-                        figsize=(450, 300),
-                        fig_x_position=int(i/3)*0.25,
+                        figsize=(550, 300),
+                        fig_x_position=int(i/3)*0.3,
                         fig_y_position=(i%3)*0.315)
 
-            if len(self.coordinates) == 1:
-                coordinate = self.coordinates[0]
+            # case for the measured data that is returned point-by-point
+            if quantity['type'] == 'numeric':
+                # 1D measurement
+                if len(self.soft_sweeped_coordinates) == 1:
+                    coordinate = self.soft_sweeped_coordinates[0]
 
-                quantity['xvals'] = np.linspace(coordinate['start'],
-                                    coordinate['end'],
-                                    coordinate['size'])
-                quantity['yvals'] = np.ones(coordinate['size'])
-                quantity['yvals'][:] = np.NaN
+                    quantity['xvals'] = np.linspace(coordinate['start'],
+                                        coordinate['end'],
+                                        coordinate['size'])
+                    quantity['yvals'] = np.ones(coordinate['size'])
+                    quantity['yvals'][:] = np.NaN
 
-                quantity['plot'].add(x=quantity['xvals'],
-                                     y=quantity['yvals'],
-                                     xlabel=coordinate['name'],
-                                     xunit=coordinate['unit'],
-                                     ylabel=quantity['name'],
-                                     yunit=quantity['unit'])
+                    quantity['plot'].add(x=quantity['xvals'],
+                                         y=quantity['yvals'],
+                                         xlabel=coordinate['name'],
+                                         xunit=coordinate['unit'],
+                                         ylabel=quantity['name'],
+                                         yunit=quantity['unit'])
 
-            elif len(self.coordinates) == 2:
-                coordinateX = self.coordinates[0]
-                coordinateY = self.coordinates[1]
+                # 2D measurement
+                elif len(self.soft_sweeped_coordinates) == 2:
+                    coordinateX = self.soft_sweeped_coordinates[0]
+                    coordinateY = self.soft_sweeped_coordinates[1]
 
-                quantity['xvals'] = np.linspace(coordinateX['start'],
-                                    coordinateX['end'],
-                                    coordinateX['size'])
-                quantity['yvals'] = np.linspace(coordinateY['start'],
-                                    coordinateY['end'],
-                                    coordinateY['size'])
+                    quantity['xvals'] = np.linspace(coordinateX['start'],
+                                        coordinateX['end'],
+                                        coordinateX['size'])
+                    quantity['yvals'] = np.linspace(coordinateY['start'],
+                                        coordinateY['end'],
+                                        coordinateY['size'])
 
-                quantity['zvals'] = np.ones([coordinateY['size'],
-                                             coordinateX['size']])
-                quantity['zvals'][:,:] = np.NaN
+                    quantity['zvals'] = np.ones([coordinateY['size'],
+                                                 coordinateX['size']])
+                    quantity['zvals'][:,:] = np.NaN
 
-                quantity['plot'].add(x=quantity['xvals'],
-                                     y=quantity['yvals'],
-                                     z=quantity['zvals'],
-                                     xlabel=coordinateX['name'],
-                                     xunit=coordinateX['unit'],
-                                     ylabel=coordinateY['name'],
-                                     yunit=coordinateY['unit'],
-                                     zlabel=quantity['name'],
-                                     zunit=quantity['unit'])
+                    quantity['plot'].add(x=quantity['xvals'],
+                                         y=quantity['yvals'],
+                                         z=quantity['zvals'],
+                                         xlabel=coordinateX['name'],
+                                         xunit=coordinateX['unit'],
+                                         ylabel=coordinateY['name'],
+                                         yunit=coordinateY['unit'],
+                                         zlabel=quantity['name'],
+                                         zunit=quantity['unit'])
+                else:
+                    raise NotImplementedError('qcodes_with_qtplot only'
+                                'supports plotting 1D and 2D data')
+
+            # case for the measured data that is returned line-by-line
+            elif quantity['type'] == 'array':
+                # 1D measurement
+                if len(self.soft_sweeped_coordinates) == 0:
+                    coordinate = self.hard_sweeped_coordinates[0]
+
+                    quantity['xvals'] = coordinate['coordinates']
+                    quantity['yvals'] = np.ones(coordinate['coordinates'].shape)
+                    quantity['yvals'][:] = np.NaN
+
+                    quantity['plot'].add(x=quantity['xvals'],
+                                         y=quantity['yvals'],
+                                         xlabel=coordinate['name'],
+                                         xunit=coordinate['unit'],
+                                         ylabel=quantity['name'],
+                                         yunit=quantity['unit'])
+                # 2D measurement
+                elif len(self.soft_sweeped_coordinates) == 1:
+                    coordinateX = self.soft_sweeped_coordinates[0]
+                    coordinateY = self.hard_sweeped_coordinates[0]
+
+                    quantity['xvals'] = np.linspace(coordinateX['start'],
+                                        coordinateX['end'],
+                                        coordinateX['size'])
+                    quantity['yvals'] = coordinateY['coordinates']
+
+                    quantity['zvals'] = np.ones([coordinateY['coordinates'].shape[0],
+                                                 coordinateX['size']])
+                    quantity['zvals'][:,:] = np.NaN
+
+                    quantity['plot'].add(x=quantity['xvals'],
+                                         y=quantity['yvals'],
+                                         z=quantity['zvals'],
+                                         xlabel=coordinateX['name'],
+                                         xunit=coordinateX['unit'],
+                                         ylabel=coordinateY['name'],
+                                         yunit=coordinateY['unit'],
+                                         zlabel=quantity['name'],
+                                         zunit=quantity['unit'])
+                else:
+                    raise NotImplementedError('qcodes_with_qtplot only'
+                                'supports plotting 1D and 2D data')
+                    
             else:
-                raise NotImplementedError('qcodes_with_qtplot only'
-                				'supports plotting 1D and 2D data')
+                raise NotImplementedError('Unsupported type of data.'
+                                    ' Must be "numeric" of "array".')
+
+    def create_progress_bar(self):
+        first_quantity = self.quantities[0]
+        if 'zvals' in first_quantity.keys():
+            total_datapoints = np.product(first_quantity['zvals'].shape)
+        else:
+            total_datapoints = first_quantity['yvals'].shape[0]
+        self.progress_bar = ipw.FloatProgress(value=0,
+                                        min=0, max=total_datapoints,
+                                        description='Progress:')
+        display(self.progress_bar)
+
+    def update_progress_bar(self):
+        self.progress_bar.value = self.point_counter

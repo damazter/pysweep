@@ -6,7 +6,6 @@ from pysweep.core.measurementfunctions import MeasurementFunction, MakeMeasureme
 
 STATION = None  # a way to set the station as a module property
 
-
 # define sweep_object
 def sweep_object(parameter, points, dataparameter=None):
     @MakeMeasurementFunction([])
@@ -133,7 +132,7 @@ def sweep(measurement_init, measurement_end, measure,
                     pysweep_datasaver.add_to_line(list(zip(colnames, data)))
                     pysweep_datasaver.write_line()
                     t.update(1)
-                    pysweep_datasaver.write_block()
+                pysweep_datasaver.write_block()
         dict_waterfall.update({'STATUS': 'STOP'})
         measurement_end(dict_waterfall)
     
