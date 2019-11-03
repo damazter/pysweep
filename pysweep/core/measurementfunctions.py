@@ -12,6 +12,15 @@ class MeasurementFunction:
     def __call__(self, *args, **kwargs) -> list:
         return self.function(*args, **kwargs)
 
+    def __add__(self, other):
+        
+        def combined_function(*args, **kwargs):
+            return self.function(*args, **kwargs)+other.function(*args, **kwargs)
+
+        combined_paramstruct = self.paramstruct+other.paramstruct
+
+        return MeasurementFunction(combined_function, combined_paramstruct)
+
 
     # The paramstruct method should return a list of DataParameters for each element this
     # Measurement function will return in its __call__ method
