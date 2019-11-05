@@ -30,6 +30,15 @@ class DataParameterFixedSweep(DataParameter):
         r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent), str(self.npoints)]
         return " ".join(r)
 
+class DataParameterFixedAxis(DataParameter):
+    def __init__(self, name, unit, paramtype, coordinates):
+        super().__init__(name, unit, paramtype, True)
+        self.coordinates = coordinates
+
+    def __repr__(self):
+        r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent)]
+        return " ".join(r)
+
 # A databackend is responsible for storing the information that that is acquired by pysweep
 # Since different situations could use different backends,
 # this file defines the interface that pysweep will use to control the data backend
@@ -57,7 +66,8 @@ class DataBackend:
 
 # This class defines how
 class DataSaver:
-    # pysweep will dump line information here which will consists of a list of tuples with name, value to store
+    # pysweep will dump line information here which will consists
+    # of a list of tuples with name, value to store
     def add_to_line(self, line):
         raise NotImplementedError()
 
@@ -83,6 +93,7 @@ class CombinedDataBackend(DataBackend, DataSaver):
         self.datasavers = []
         for db in self.databackends:
             self.datasavers.append(db.__enter__())
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for db in self.databackends:
