@@ -13,13 +13,13 @@ def add_function(sweep_object, fun):
     return SweepObject(wrapper, sweep_object.unit, sweep_object.label, sweep_object.point_function)
 
 
-def sweep_time(dt, npoints):
+def sweep_repetitions(waiting_time, npoints):
     @MakeMeasurementFunction([])
     def fun(x, dict_waterfall):
-        time.sleep(dt)
+        time.sleep(waiting_time)
         return []
 
     @MakeMeasurementFunction([])
     def point_fun(dict_waterfall):
-        return np.arange(dt, (npoints+1)*dt, dt), []
-    return SweepObject(fun, 's', 'time', point_fun)
+        return range(npoints), []
+    return SweepObject(fun, '', 'iteration', point_fun)
