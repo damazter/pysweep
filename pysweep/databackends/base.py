@@ -1,10 +1,19 @@
 # The DataParameter class stores all information that belongs to a single data column
 class DataParameter:
-    def __init__(self, name, unit, paramtype='numeric', independent=False):
+    def __init__(self, name, unit, paramtype='numeric', independent=False, extra_dependencies=None, duplicate=False):
         self.name = name  # name and label of this parameter
         self.unit = unit  # The unit belonging to values of this type
         self.paramtype = paramtype  # the type of the value
-        self.independent = independent  # Is this a column a dependent or independent variable type
+        self.independent = independent  # Is this a column a dependent or independent variable type,
+        # 0 = False,
+        # 1 = True,
+        # 2 is Independent, but pysweep will not recognize it as such, meaning that it will only show up as an
+        # independent for variables that add it as an independent via exta_dependencies
+        if extra_dependencies is None:
+            self.extra_dependencies = []
+        else:
+            self.extra_dependencies = extra_dependencies
+        self.duplicate=duplicate
 
     def __repr__(self):
         r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent)]
