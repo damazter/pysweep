@@ -83,7 +83,7 @@ def sweep(measurement_init, measurement_end, measure,
         n = n*sweep1.get_dataparameter().npoints
     if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
         n = n*sweep2.get_dataparameter().npoints
-    if isinstance(sweep2.get_dataparameter(), DataParameterFixedSweep):
+    if isinstance(sweep3.get_dataparameter(), DataParameterFixedSweep):
         n = n*sweep3.get_dataparameter().npoints
     t = timer(n)
     #def so2c(so):
