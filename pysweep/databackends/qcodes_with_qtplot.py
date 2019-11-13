@@ -177,8 +177,8 @@ class DataBackend(qcodes_backend.DataBackend):
                     quantity['xvals'][self.point_counter] = line[2][1]
                     quantity['yvals'][self.point_counter] = line[3+qi][1]
                 elif len(self.soft_sweeped_coordinates) == 2:
-                    x_index = self.point_counter % self.coordinates[0]['size']
-                    y_index = int((self.point_counter - x_index)/self.coordinates[0]['size'])
+                    x_index = self.point_counter % self.soft_sweeped_coordinates[0]['size']
+                    y_index = int((self.point_counter - x_index)/self.soft_sweeped_coordinates[0]['size'])
 
                     # commented out because I can't get the irregular grid
                     # to work [FKM], TODO
