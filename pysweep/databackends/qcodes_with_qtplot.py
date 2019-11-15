@@ -162,8 +162,9 @@ class DataBackend(qcodes_backend.DataBackend):
                 self.update_progress_bar()
 
             if self.export_png:
+                run_id = self.runner.ds.run_id
                 filename = '/'.join([self.directory_prefix,
-                                self.time+'_'+quantity['name']+'.png'])
+                                str(run_id)+'_'+self.time+'_'+quantity['name']+'.png'])
                 quantity['plot'].save(filename=filename)
 
     def add_to_line(self, line):
