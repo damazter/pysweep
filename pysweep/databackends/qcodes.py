@@ -13,20 +13,25 @@ class DataBackend(base.DataBackend, base.DataSaver):
         setpoints = []
         self.columns = []
         for param in paramstructure:
-            self.columns.append(param.name)
-            # Hack to exclude trivial measurement axes
+
             if param.independent:
+                # Hack to exclude trivial measurement axes
                 if isinstance(param, base.DataParameterFixedSweep) and param.npoints==1:
                     print(param.name, ', postponing registration')
                 else:
                     if not param.duplicate:
+                        if param.name in self.columns:
+                            raise ValueError('Parameter name '+str(param.name)+ ' occurs multiple times in paramstruct')
                         self.meas.register_custom_parameter(param.name, unit=param.unit, paramtype=param.paramtype)
                     if not param.independent == 2:  # For parameters that will be the independent for a few explicitely defined parameters, we do not want to add it as an automatic independent
                         setpoints.append(param.name)
             else:
                 if not param.duplicate:
+                    if param.name in self.columns:
+                        raise ValueError('Parameter name ' + str(param.name) + ' occurs multiple times in paramstruct')
                     self.meas.register_custom_parameter(param.name, unit=param.unit, paramtype=param.paramtype,
                                                         setpoints=setpoints+param.extra_dependencies)
+            self.columns.append(param.name)
         # for param in paramstructure:
         #     # Hack to exclude trivial measurement axes
         #     if param.independent:
