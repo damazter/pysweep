@@ -1,4 +1,5 @@
 import pysweep.databackends.base as base
+import qcodes.instrument.base
 
 STUPIDAXES = ['None1', 'None2', 'None3']
 
@@ -9,9 +10,18 @@ class DataBackend(base.DataBackend, base.DataSaver):
         self.datasaver = None
         self.columns = None
 
+        station = self.meas.station
+        if 'PysweepMetadata' not in station.components:
+            pysweepmetadata = PysweepMetadata()
+            station.add_component(pysweepmetadata)
+
+        self.pysweepmetadata = station.components['PysweepMetadata']
+
     def setup(self, paramstructure):
-        setpoints = []
-        self.columns = []
+        setpoints = []  # variable to hold independent parameters registered to pysweep
+        self.columns = []  # list to hold all dependent and independent columns
+        datashape = {}  # dictionary to try and store the datashapes
+        independents = {} # dictionary to store all independents and their axis length (not the same as setpoints!)
         for param in paramstructure:
 
             if param.independent:
@@ -25,13 +35,24 @@ class DataBackend(base.DataBackend, base.DataSaver):
                         self.meas.register_custom_parameter(param.name, unit=param.unit, paramtype=param.paramtype)
                     if not param.independent == 2:  # For parameters that will be the independent for a few explicitely defined parameters, we do not want to add it as an automatic independent
                         setpoints.append(param.name)
+                    # try to determine the axis properties of this sweep
+                    if isinstance(param, base.DataParameterFixedSweep):
+                        independents[param.name] = param.npoints
+                    else:
+                        independents[param.name] = None
             else:
                 if not param.duplicate:
                     if param.name in self.columns:
                         raise ValueError('Parameter name ' + str(param.name) + ' occurs multiple times in paramstruct')
                     self.meas.register_custom_parameter(param.name, unit=param.unit, paramtype=param.paramtype,
                                                         setpoints=setpoints+param.extra_dependencies)
+                    # try to figure out the shape corresponding to this parameter
+                    # it is important however to have them in order which setpoints+param.extra_dependencies might not be
+                    # so we use the following list comprehension instead
+                    shape = [independents[name] for name in self.columns if name in setpoints+param.extra_dependencies]
+                    datashape[param.name] = shape
             self.columns.append(param.name)
+        self.pysweepmetadata.datashape(datashape)
         # for param in paramstructure:
         #     # Hack to exclude trivial measurement axes
         #     if param.independent:
@@ -108,3 +129,7 @@ class CutDataBackend(DataBackend):
                 raise RuntimeError('I dont know what went wrong, but datacolumn was not written. I rather crash than lose data. Datacolumn: '+ line[i][0]+'_'+str(i))
 
 
+class PysweepMetadata(qcodes.instrument.base.Instrument):
+    def __init__(self):
+        super().__init__('PysweepMetadata')
+        self.add_parameter(name='datashape', parameter_class=qcodes.instrument.parameter.ManualParameter)
