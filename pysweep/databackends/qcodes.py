@@ -1,5 +1,6 @@
+from typing import (Sequence, Optional)
 import pysweep.databackends.base as base
-import qcodes.instrument.base
+import qcodes.utils.metadata
 
 STUPIDAXES = ['None1', 'None2', 'None3']
 
@@ -13,7 +14,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
         station = self.meas.station
         if 'PysweepMetadata' not in station.components:
             pysweepmetadata = PysweepMetadata()
-            station.add_component(pysweepmetadata)
+            station.add_component(pysweepmetadata, name='PysweepMetadata')
 
         self.pysweepmetadata = station.components['PysweepMetadata']
 
@@ -52,7 +53,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
                     shape = [independents[name] for name in self.columns if name in setpoints+param.extra_dependencies]
                     datashape[param.name] = shape
             self.columns.append(param.name)
-        self.pysweepmetadata.datashape(datashape)
+        self.pysweepmetadata.datashape = datashape
         # for param in paramstructure:
         #     # Hack to exclude trivial measurement axes
         #     if param.independent:
@@ -129,7 +130,11 @@ class CutDataBackend(DataBackend):
                 raise RuntimeError('I dont know what went wrong, but datacolumn was not written. I rather crash than lose data. Datacolumn: '+ line[i][0]+'_'+str(i))
 
 
-class PysweepMetadata(qcodes.instrument.base.Instrument):
+class PysweepMetadata(qcodes.utils.metadata.Metadatable):
     def __init__(self):
-        super().__init__('PysweepMetadata')
-        self.add_parameter(name='datashape', parameter_class=qcodes.instrument.parameter.ManualParameter)
+        super().__init__()
+        self.datashape = {}
+
+    def snapshot_base(self, update: bool = False,
+                      params_to_skip_update: Optional[Sequence[str]] = None):
+        return {'datashape': self.datashape}
