@@ -21,7 +21,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
     def setup(self, paramstructure):
         setpoints = []  # variable to hold independent parameters registered to pysweep
         self.columns = []  # list to hold all dependent and independent columns
-        datashape = {}  # dictionary to try and store the datashapes
+        datashapes = {}  # dictionary to try and store the datashapes
         independents = {} # dictionary to store all independents and their axis length (not the same as setpoints!)
         for param in paramstructure:
 
@@ -51,9 +51,9 @@ class DataBackend(base.DataBackend, base.DataSaver):
                     # it is important however to have them in order which setpoints+param.extra_dependencies might not be
                     # so we use the following list comprehension instead
                     shape = [independents[name] for name in self.columns if name in setpoints+param.extra_dependencies]
-                    datashape[param.name] = shape
+                    datashapes[param.name] = shape
             self.columns.append(param.name)
-        self.pysweepmetadata.datashape = datashape
+        self.pysweepmetadata.datashapes = datashapes
         # for param in paramstructure:
         #     # Hack to exclude trivial measurement axes
         #     if param.independent:
@@ -133,8 +133,8 @@ class CutDataBackend(DataBackend):
 class PysweepMetadata(qcodes.utils.metadata.Metadatable):
     def __init__(self):
         super().__init__()
-        self.datashape = {}
+        self.datashapes = {}
 
     def snapshot_base(self, update: bool = False,
                       params_to_skip_update: Optional[Sequence[str]] = None):
-        return {'datashape': self.datashape}
+        return {'datashapes': self.datashapes}
