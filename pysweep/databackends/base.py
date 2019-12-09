@@ -32,7 +32,7 @@ class DataParameterFixedSweep(DataParameter):
 
 class DataParameterFixedAxis(DataParameterFixedSweep):
     def __init__(self, name, unit, paramtype, coordinates):
-        super().__init__(name, unit, paramtype, coordinates[0], coordinates[1], len(coordinates))
+        super().__init__(name, unit, paramtype, coordinates[0], coordinates[-1], len(coordinates))
         self.coordinates = coordinates
 
     def __repr__(self):
