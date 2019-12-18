@@ -11,18 +11,21 @@ class DataBackend(base.DataBackend, base.DataSaver):
         self.datasaver = None
         self.columns = None
 
-        station = self.meas.station
-        if 'PysweepMetadata' not in station.components:
+        self.station = self.meas.station
+        if 'PysweepMetadata' not in self.station.components:
             pysweepmetadata = PysweepMetadata()
-            station.add_component(pysweepmetadata, name='PysweepMetadata')
+            self.station.add_component(pysweepmetadata, name='PysweepMetadata')
 
-        self.pysweepmetadata = station.components['PysweepMetadata']
+        self.pysweepmetadata = self.station.components['PysweepMetadata']
 
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         setpoints = []  # variable to hold independent parameters registered to pysweep
         self.columns = []  # list to hold all dependent and independent columns
         datashapes = {}  # dictionary to try and store the datashapes
         independents = {} # dictionary to store all independents and their axis length (not the same as setpoints!)
+
+        dict_waterfall['STATION'] = self.station
+
         for param in paramstructure:
 
             if param.independent:

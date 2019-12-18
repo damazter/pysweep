@@ -69,7 +69,7 @@ def sweep(measurement_init, measurement_end, measure,
             print(time.asctime(time.localtime(eta)))
 
     dict_waterfall = {'STATUS': 'INIT'}
-    measurement_init(dict_waterfall)
+
 
     #TODO create datafile here
     n = 1
@@ -106,7 +106,8 @@ def sweep(measurement_init, measurement_end, measure,
     for param in measure.get_paramstruct():
         cols.append(param)
 
-    databackend.setup(cols)
+    databackend.setup(cols, dict_waterfall)
+    measurement_init(dict_waterfall)
     colnames = [col.name for col in cols]
 
     with databackend as pysweep_datasaver:

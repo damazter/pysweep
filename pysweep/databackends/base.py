@@ -43,7 +43,7 @@ class DataParameterFixedAxis(DataParameterFixedSweep):
 # Since different situations could use different backends,
 # this file defines the interface that pysweep will use to control the data backend
 class DataBackend:
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         # This function is called to signal that a measurement is coming
         # it contains the parameter structure which is a list of DataParameters
         # every DataParameter can in principle depend on all independents preceding it

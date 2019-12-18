@@ -4,7 +4,7 @@ class DebugDataBackend(base.DataBackend, base.DataSaver):
     def __init__(self):
         pass
 
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         for param in paramstructure:
             print(param)
 

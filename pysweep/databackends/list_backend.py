@@ -5,7 +5,7 @@ class ListDataBackend(base.DataBackend, base.DataSaver):
         self.paramstruct = None
         self.lines = []
 
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         self.paramstruct = paramstructure
 
     def __enter__(self):

@@ -63,8 +63,8 @@ class DataBackend(qcodes_backend.DataBackend):
 
         super().__init__(measurement)
 
-    def setup(self, paramstructure):
-        super().setup(paramstructure)  
+    def setup(self, paramstructure, dict_waterfall):
+        super().setup(paramstructure, dict_waterfall)
         
         # distinguish between independent and dependent parameters
         # (coordinates and quantities, respectively)
