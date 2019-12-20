@@ -4,8 +4,6 @@ from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
 from pysweep.core.sweepobject import SweepObject
 from pysweep.core.measurementfunctions import MeasurementFunction, MakeMeasurementFunction
 
-STATION = None  # a way to set the station as a module property
-
 # define sweep_object
 def sweep_object(parameter, points, dataparameter=None):
     @MakeMeasurementFunction([])
@@ -70,11 +68,7 @@ def sweep(measurement_init, measurement_end, measure,
             clear_output()
             print(time.asctime(time.localtime(eta)))
 
-    dict_waterfall = {'STATUS': 'INIT', 'STATION': STATION}
-    measurement_init(dict_waterfall)
-    if dict_waterfall['STATION'] is None:
-        raise ValueError("The 'measurement_init' function does not yield a "
-                         "dictionary with a 'STATION' entry inside")
+    dict_waterfall = {'STATUS': 'INIT'}
 
 
     #TODO create datafile here
@@ -112,7 +106,8 @@ def sweep(measurement_init, measurement_end, measure,
     for param in measure.get_paramstruct():
         cols.append(param)
 
-    databackend.setup(cols)
+    databackend.setup(cols, dict_waterfall)
+    measurement_init(dict_waterfall)
     colnames = [col.name for col in cols]
 
     with databackend as pysweep_datasaver:

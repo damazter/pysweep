@@ -30,9 +30,9 @@ class DataParameterFixedSweep(DataParameter):
         r = [str(self.__class__), str(self.name), str(self.unit), str(self.paramtype), str(self.independent), str(self.npoints)]
         return " ".join(r)
 
-class DataParameterFixedAxis(DataParameter):
+class DataParameterFixedAxis(DataParameterFixedSweep):
     def __init__(self, name, unit, paramtype, coordinates):
-        super().__init__(name, unit, paramtype, True)
+        super().__init__(name, unit, paramtype, coordinates[0], coordinates[-1], len(coordinates))
         self.coordinates = coordinates
 
     def __repr__(self):
@@ -43,7 +43,7 @@ class DataParameterFixedAxis(DataParameter):
 # Since different situations could use different backends,
 # this file defines the interface that pysweep will use to control the data backend
 class DataBackend:
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         # This function is called to signal that a measurement is coming
         # it contains the parameter structure which is a list of DataParameters
         # every DataParameter can in principle depend on all independents preceding it

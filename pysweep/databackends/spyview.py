@@ -24,7 +24,7 @@ class DataBackend(base.DataBackend, base.DataSaver):
         self.line = None
 
 
-    def setup(self, paramstructure):
+    def setup(self, paramstructure, dict_waterfall):
         self.columns = []
         self.column_lookup = {}
 

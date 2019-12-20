@@ -3,6 +3,14 @@ from pysweep.databackends.base import DataParameter, DataParameterFixedSweep
 
 class SweepObject:
     def __init__(self, set_function, unit, label, point_function, dataparameter=None):
+        '''
+
+        :param set_function:
+        :param unit:
+        :param label:
+        :param point_function:
+        :param dataparameter: when this parameter is None (default), the point_function will be executed once to determine the dataparameter
+        '''
         self.set_function = set_function
         self.unit = unit
         self.label = label
