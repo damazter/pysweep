@@ -29,7 +29,8 @@ class DataBackend(qcodes_backend.DataBackend):
     def __init__(self, experiment_name, sample, station,
                     plotting_interval: float=3,
                     export_png=True,
-                    progress_bar=False):
+                    progress_bar=False,
+                    close_when_finished=False):
         '''
         This is a PycQED-inspired subclass of qcodes data backend
         that adds 1D and 2D live plotting functionality.
@@ -57,6 +58,7 @@ class DataBackend(qcodes_backend.DataBackend):
         self.plotting_interval = plotting_interval
         self.export_png = export_png
         self.progress_bar = progress_bar
+        self.close_when_finished = close_when_finished
 
         self.experiment = select_experiment(experiment_name, sample)
         measurement = Measurement(self.experiment, station)
@@ -73,7 +75,13 @@ class DataBackend(qcodes_backend.DataBackend):
         self.quantities = []
 
         for param in paramstructure:
-            if isinstance(param, DataParameterFixedSweep):
+            if isinstance(param, DataParameterFixedAxis):
+                if ('None' in param.name) and (param.unit is 'e'):
+                    continue
+                self.hard_sweeped_coordinates.append({'name': param.name,
+                                                 'unit': param.unit,
+                                                 'coordinates': param.coordinates})
+            elif isinstance(param, DataParameterFixedSweep):
                 if ('None' in param.name) and (param.unit is 'e'):
                     continue
                 self.soft_sweeped_coordinates.append({'name': param.name,
@@ -81,12 +89,6 @@ class DataBackend(qcodes_backend.DataBackend):
                                                  'start': param.start,
                                                  'end': param.stop,
                                                  'size': param.npoints})
-            elif isinstance(param, DataParameterFixedAxis):
-                if ('None' in param.name) and (param.unit is 'e'):
-                    continue
-                self.hard_sweeped_coordinates.append({'name': param.name,
-                                                 'unit': param.unit,
-                                                 'coordinates': param.coordinates})
             else:
                 self.quantities.append({'name': param.name,
                                      'unit': param.unit,
@@ -167,6 +169,11 @@ class DataBackend(qcodes_backend.DataBackend):
                                 str(run_id)+'_'+self.time+'_'+quantity['name']+'.png'])
                 quantity['plot'].save(filename=filename)
 
+            if self.close_when_finished:
+                quantity['plot'].win.close()
+                del quantity['plot']
+
+
     def add_to_line(self, line):
         super().add_to_line(line)       
 
@@ -212,6 +219,9 @@ class DataBackend(qcodes_backend.DataBackend):
         # open each measured quantity in a separate window
         # this allows the user to keep only the "interesting"
         # dataset opened
+
+        # print(self.quantities)
+        # print(self.soft_sweeped_coordinates)
         for i, quantity in enumerate(self.quantities):
             quantity['plot'] = QtPlot(window_title=quantity['name'],
                         figsize=(550, 300),
