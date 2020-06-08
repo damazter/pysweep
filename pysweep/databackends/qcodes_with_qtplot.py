@@ -74,25 +74,34 @@ class DataBackend(qcodes_backend.DataBackend):
         self.hard_sweeped_coordinates = []
         self.quantities = []
 
+        parameter_index = 0
         for param in paramstructure:
             if isinstance(param, DataParameterFixedAxis):
                 if ('None' in param.name) and (param.unit is 'e'):
+                    parameter_index += 1
                     continue
                 self.hard_sweeped_coordinates.append({'name': param.name,
                                                  'unit': param.unit,
-                                                 'coordinates': param.coordinates})
+                                                 'coordinates': param.coordinates,
+                                                 'independent': param.independent})
             elif isinstance(param, DataParameterFixedSweep):
                 if ('None' in param.name) and (param.unit is 'e'):
+                    parameter_index += 1
                     continue
                 self.soft_sweeped_coordinates.append({'name': param.name,
                                                  'unit': param.unit,
                                                  'start': param.start,
                                                  'end': param.stop,
-                                                 'size': param.npoints})
+                                                 'size': param.npoints,
+                                                 'independent': param.independent})
             else:
                 self.quantities.append({'name': param.name,
                                      'unit': param.unit,
-                                     'type': param.paramtype})
+                                     'type': param.paramtype,
+                                     'index': parameter_index,
+                                     'extra_dependencies': param.extra_dependencies})
+
+            parameter_index += 1
 
 
         # to account for the parameter of
@@ -183,7 +192,7 @@ class DataBackend(qcodes_backend.DataBackend):
                 # 1D measurement
                 if len(self.soft_sweeped_coordinates) == 1:
                     quantity['xvals'][self.point_counter] = line[2][1]
-                    quantity['yvals'][self.point_counter] = line[3+qi][1]
+                    quantity['yvals'][self.point_counter] = line[quantity['index']][1]
                 elif len(self.soft_sweeped_coordinates) == 2:
                     x_index = self.point_counter % self.soft_sweeped_coordinates[0]['size']
                     y_index = int((self.point_counter - x_index)/self.soft_sweeped_coordinates[0]['size'])
@@ -192,15 +201,15 @@ class DataBackend(qcodes_backend.DataBackend):
                     # to work [FKM], TODO
                     # quantity['xvals'][y_index] = line[1][1]
                     # quantity['yvals'][x_index] = line[2][1]
-                    quantity['zvals'][y_index,x_index] = line[3+qi][1]
+                    quantity['zvals'][y_index,x_index] = line[quantity['index']][1]
             # case for the measured data that is returned line-by-line
             elif quantity['type'] == 'array':
                 # 1D measurement
                 if len(self.soft_sweeped_coordinates) == 0:
-                    quantity['yvals'][:] = line[4+qi][1][:]
+                    quantity['yvals'][:] = line[quantity['index']][1][:]
                 # 2D measurement
                 elif len(self.soft_sweeped_coordinates) == 1:
-                    quantity['zvals'][:,self.point_counter] = line[4+qi][1][:]
+                    quantity['zvals'][:,self.point_counter] = line[quantity['index']][1][:]
             else:
                 raise NotImplementedError('qcodes_with_qtplot only supports plotting 1D and 2D data')
         
@@ -279,8 +288,17 @@ class DataBackend(qcodes_backend.DataBackend):
             # case for the measured data that is returned line-by-line
             elif quantity['type'] == 'array':
                 # 1D measurement
+
                 if len(self.soft_sweeped_coordinates) == 0:
-                    coordinate = self.hard_sweeped_coordinates[0]
+                    # check if you should use the default dependency
+                    # on hard_sweeped coordinate, otherwise find a hard_sweeped
+                    # coordinate with a matching name
+                    if quantity['extra_dependencies'] == []:
+                        coordinate = self.hard_sweeped_coordinates[0]
+                    else:
+                        for coordinate in self.hard_sweeped_coordinates:
+                            if coordinate['name'] == quantity['extra_dependencies'][0]:
+                                break
 
                     quantity['xvals'] = coordinate['coordinates']
                     quantity['yvals'] = np.ones(coordinate['coordinates'].shape)
@@ -295,7 +313,15 @@ class DataBackend(qcodes_backend.DataBackend):
                 # 2D measurement
                 elif len(self.soft_sweeped_coordinates) == 1:
                     coordinateX = self.soft_sweeped_coordinates[0]
-                    coordinateY = self.hard_sweeped_coordinates[0]
+                    # check if you should use the default dependency
+                    # on hard_sweeped coordinate, otherwise find a hard_sweeped
+                    # coordinate with a matching name
+                    if quantity['extra_dependencies'] == []:
+                        coordinateY = self.hard_sweeped_coordinates[0]
+                    else:
+                        for coordinateY in self.hard_sweeped_coordinates:
+                            if coordinateY['name'] == quantity['extra_dependencies'][0]:
+                                break
 
                     quantity['xvals'] = np.linspace(coordinateX['start'],
                                         coordinateX['end'],
