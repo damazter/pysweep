@@ -20,8 +20,8 @@ class DataParameter:
         return " ".join(r)
 
 class DataParameterFixedSweep(DataParameter):
-    def __init__(self, name, unit, paramtype, start, stop, npoints):
-        super().__init__(name, unit, paramtype, True)
+    def __init__(self, name, unit, paramtype, start, stop, npoints, independent=True):
+        super().__init__(name, unit, paramtype, independent)
         self.start = start
         self.stop = stop
         self.npoints = npoints
@@ -31,8 +31,8 @@ class DataParameterFixedSweep(DataParameter):
         return " ".join(r)
 
 class DataParameterFixedAxis(DataParameterFixedSweep):
-    def __init__(self, name, unit, paramtype, coordinates):
-        super().__init__(name, unit, paramtype, coordinates[0], coordinates[-1], len(coordinates))
+    def __init__(self, name, unit, paramtype, coordinates, independent=True):
+        super().__init__(name, unit, paramtype, coordinates[0], coordinates[-1], len(coordinates), independent)
         self.coordinates = coordinates
 
     def __repr__(self):
