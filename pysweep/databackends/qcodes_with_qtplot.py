@@ -132,7 +132,7 @@ class DataBackend(qcodes_backend.DataBackend):
             fmt = self.runner.ds.path_to_db.split('.')[0]
             fmt = fmt+'\\{date}\\{time}'
             fmt = fmt.replace('\\', '/')
-            self.io = qc.DiskIO('.')
+            self.io = qc.data.DiskIO('.')
             loc_provider = qc.data.location.FormatLocation(
                 fmt=fmt)
             self.directory_prefix = loc_provider(self.io)
