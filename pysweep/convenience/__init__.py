@@ -29,9 +29,11 @@ def sleep_after_first(sweep_object, sleep_time):
     # index is an array rather than an int, such that we can reference the same object all the time
     # whereas ints would be immutable, needing a 'global' statement, mixing together namespaces that we want to separate
     index = []
+    @MakeMeasurementFunction([])
     def pointfun(dict_waterfall):
-        index = []
-        return sweep_object.point_function()
+        while len(index)>=1:
+            index.pop()
+        return sweep_object.point_function(dict_waterfall)
     def setfun(x, dict_waterfall):
         r = sweep_object.set_function(x, dict_waterfall)
         if len(index) == 0:
@@ -42,5 +44,5 @@ def sleep_after_first(sweep_object, sleep_time):
     pf = MeasurementFunction(pointfun, sweep_object.point_function.paramstruct)
     sf = MeasurementFunction(setfun, sweep_object.set_function.paramstruct)
     # construct a new pointfunction to return
-    return SweepObject(sf, sweep_object.unit, sweep_object.label)
+    return SweepObject(sf, sweep_object.unit, sweep_object.label, pointfun, dataparameter=sweep_object.dataparameter)
 
