@@ -140,7 +140,7 @@ class DataBackend(qcodes_backend.DataBackend):
 
         # create a directory for figures
         if self.export_png:
-            fmt = self.runner.ds.path_to_db.split('.')[0]
+            fmt = '.'.join(self.runner.ds.path_to_db.split('.')[:-1])
             fmt = fmt+'\\{date}\\{time}'
             fmt = fmt.replace('\\', '/')
             try:
