@@ -113,7 +113,7 @@ def sweep(measurement_init, measurement_end, measure,
     with databackend as pysweep_datasaver:
         # do measurement
         dict_waterfall.update({'STATUS': 'RUN'})
-        dict_waterfall.update({'DATASAVER': pysweep_datasaver})
+        dict_waterfall.update({'DATASAVER': pysweep_datasaver.datasaver})
         points3, s3p_measure = sweep3.point_function(dict_waterfall)
         for s3 in points3:
             s3_measure = sweep3.set_function(s3, dict_waterfall)
