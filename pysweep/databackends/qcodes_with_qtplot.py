@@ -236,9 +236,9 @@ class DataBackend(qcodes_backend.DataBackend):
         # print(self.soft_sweeped_coordinates)
         for i, quantity in enumerate(self.quantities):
             quantity['plot'] = QtPlot(window_title=quantity['name'],
-                        figsize=(550, 300),
-                        fig_x_position=int(i/3)*0.3,
-                        fig_y_position=(i%3)*0.315)
+                        figsize=(570, 450),
+                        fig_x_position=int(i/2)*0.3,
+                        fig_y_position=(i%2)*0.33)
 
             # case for the measured data that is returned point-by-point
             if quantity['type'] == 'numeric':
