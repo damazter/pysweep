@@ -77,7 +77,7 @@ class DataBackend(qcodes_backend.DataBackend):
         parameter_index = 0
         for param in paramstructure:
             if isinstance(param, DataParameterFixedAxis):
-                if ('None' in param.name) and (param.unit is 'e'):
+                if ('None' in param.name) and (param.unit == 'e'):
                     parameter_index += 1
                     continue
                 self.hard_sweeped_coordinates.append({'name': param.name,
@@ -85,7 +85,7 @@ class DataBackend(qcodes_backend.DataBackend):
                                                  'coordinates': param.coordinates,
                                                  'independent': param.independent})
             elif isinstance(param, DataParameterFixedSweep):
-                if ('None' in param.name) and (param.unit is 'e'):
+                if ('None' in param.name) and (param.unit == 'e'):
                     parameter_index += 1
                     continue
                 self.soft_sweeped_coordinates.append({'name': param.name,
@@ -136,7 +136,7 @@ class DataBackend(qcodes_backend.DataBackend):
 
             plot_title = ', '.join(title_list)
             quantity['plot'].subplots[0].setTitle(plot_title,
-                            size='7pt',color='000000')
+                            size='7pt', color='black')
 
         # create a directory for figures
         if self.export_png:
@@ -236,9 +236,9 @@ class DataBackend(qcodes_backend.DataBackend):
         # print(self.soft_sweeped_coordinates)
         for i, quantity in enumerate(self.quantities):
             quantity['plot'] = QtPlot(window_title=quantity['name'],
-                        figsize=(570, 450),
-                        fig_x_position=int(i/2)*0.3,
-                        fig_y_position=(i%2)*0.33)
+                        figsize=(570, 450))
+                        # fig_x_position=int(i/2)*0.3,
+                        # fig_y_position=(i%2)*0.33)
 
             # case for the measured data that is returned point-by-point
             if quantity['type'] == 'numeric':
