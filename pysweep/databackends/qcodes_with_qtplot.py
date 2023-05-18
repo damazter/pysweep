@@ -9,6 +9,11 @@ except:
     print('Ipywidgets not loaded!')
 
 import qcodes as qc
+try:
+    import qcodes_loop.data as qc_data
+except:
+    print('Are you using not up to date qcodes? Do not blame me if something breaks!')
+
 from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.dataset.measurements import Measurement
 
@@ -144,11 +149,13 @@ class DataBackend(qcodes_backend.DataBackend):
             fmt = fmt+'\\{date}\\{time}'
             fmt = fmt.replace('\\', '/')
             try:
-                self.io = qc.DiskIO('.')
+                self.io = qc_data.io.DiskIO('.')
+                loc_provider = qc_data.location.FormatLocation(
+                    fmt=fmt)
             except AttributeError:
                 self.io = qc.data.DiskIO('.')
-            loc_provider = qc.data.location.FormatLocation(
-                fmt=fmt)
+                loc_provider = qc.data.location.FormatLocation(
+                    fmt=fmt)
             self.directory_prefix = loc_provider(self.io)
             self.directory_prefix = '/'.join(self.directory_prefix.split('/')[:-1])
             print(self.directory_prefix )
